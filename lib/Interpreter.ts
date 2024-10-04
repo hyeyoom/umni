@@ -15,7 +15,8 @@ export class Interpreter {
         gb: 1024.0 * 1024 * 1024,
     };
 
-    constructor(private environment: Environment = new Environment()) {}
+    constructor(private environment: Environment = new Environment()) {
+    }
 
     interpret(node: ASTNode): ComputedValue {
         if (node instanceof ASTNode.Natural) {
@@ -64,12 +65,7 @@ export class Interpreter {
                     throw new Error(`Argument count mismatch for function: ${node.name}`);
                 }
 
-                const localEnv = new Environment(
-                    new Map(this.environment.variables),
-                    this.environment.functions,
-                    this.environment.constants,
-                    this.environment.builtInFunctions
-                );
+                const localEnv = new Environment();
 
                 for (let i = 0; i < functionNode.parameters.length; i++) {
                     const argValue = this.interpret(node.args[i]);
@@ -134,6 +130,8 @@ export class Interpreter {
         } else {
             throw new Error(`Unknown unary operator: ${operator}`);
         }
+        // 편법 -_-
+        return new ComputedValue.Natural(0)
     }
 
     private assignValue(target: ASTNode, value: ComputedValue): void {
@@ -187,16 +185,20 @@ export class Interpreter {
             const leftValue =
                 left instanceof ComputedValue.WithUnit
                     ? left.value
-                    : left instanceof ComputedValue.Number
+                    : left instanceof ComputedValue.Number.Real
                         ? left.value
-                        : null;
+                        : left instanceof ComputedValue.Number.Natural
+                            ? left.value
+                            : null;
             const rightValue =
                 right instanceof ComputedValue.WithUnit
                     ? right.value
-                    : right instanceof ComputedValue.Number
+                    : right instanceof ComputedValue.Number.Real
                         ? right.value
-                        : null;
-            const unit = left instanceof ComputedValue.WithUnit ? left.unit : right.unit;
+                        : right instanceof ComputedValue.Number.Natural
+                            ? right.value
+                            : null;
+            const unit = left instanceof ComputedValue.WithUnit ? left.unit : right instanceof ComputedValue.WithUnit ? right.unit : null;
             if (leftValue !== null && rightValue !== null && unit) {
                 return new ComputedValue.WithUnit(leftValue + rightValue, unit);
             }
@@ -247,16 +249,20 @@ export class Interpreter {
             const leftValue =
                 left instanceof ComputedValue.WithUnit
                     ? left.value
-                    : left instanceof ComputedValue.Number
+                    : left instanceof ComputedValue.Number.Real
                         ? left.value
-                        : null;
+                        : left instanceof ComputedValue.Number.Natural
+                            ? left.value
+                            : null;
             const rightValue =
                 right instanceof ComputedValue.WithUnit
                     ? right.value
-                    : right instanceof ComputedValue.Number
+                    : right instanceof ComputedValue.Number.Real
                         ? right.value
-                        : null;
-            const unit = left instanceof ComputedValue.WithUnit ? left.unit : right.unit;
+                        : right instanceof ComputedValue.Number.Natural
+                            ? right.value
+                            : null;
+            const unit = left instanceof ComputedValue.WithUnit ? left.unit : right instanceof ComputedValue.WithUnit ? right.unit : null;
             if (leftValue !== null && rightValue !== null && unit) {
                 return new ComputedValue.WithUnit(leftValue - rightValue, unit);
             }
@@ -285,16 +291,20 @@ export class Interpreter {
             const leftValue =
                 left instanceof ComputedValue.WithUnit
                     ? left.value
-                    : left instanceof ComputedValue.Number
+                    : left instanceof ComputedValue.Number.Real
                         ? left.value
-                        : null;
+                        : left instanceof ComputedValue.Number.Natural
+                            ? left.value
+                            : null;
             const rightValue =
                 right instanceof ComputedValue.WithUnit
                     ? right.value
-                    : right instanceof ComputedValue.Number
+                    : right instanceof ComputedValue.Number.Real
                         ? right.value
-                        : null;
-            const unit = left instanceof ComputedValue.WithUnit ? left.unit : right.unit;
+                        : right instanceof ComputedValue.Number.Natural
+                            ? right.value
+                            : null;
+            const unit = left instanceof ComputedValue.WithUnit ? left.unit : right instanceof ComputedValue.WithUnit ? right.unit : null;
             if (leftValue !== null && rightValue !== null && unit) {
                 return new ComputedValue.WithUnit(leftValue * rightValue, unit);
             }
@@ -330,16 +340,20 @@ export class Interpreter {
             const leftValue =
                 left instanceof ComputedValue.WithUnit
                     ? left.value
-                    : left instanceof ComputedValue.Number
+                    : left instanceof ComputedValue.Number.Real
                         ? left.value
-                        : null;
+                        : left instanceof ComputedValue.Number.Natural
+                            ? left.value
+                            : null;
             const rightValue =
                 right instanceof ComputedValue.WithUnit
                     ? right.value
-                    : right instanceof ComputedValue.Number
+                    : right instanceof ComputedValue.Number.Real
                         ? right.value
-                        : null;
-            const unit = left instanceof ComputedValue.WithUnit ? left.unit : right.unit;
+                        : right instanceof ComputedValue.Number.Natural
+                            ? right.value
+                            : null;
+            const unit = left instanceof ComputedValue.WithUnit ? left.unit : right instanceof ComputedValue.WithUnit ? right.unit : null;
             if (leftValue !== null && rightValue !== null && unit) {
                 return new ComputedValue.WithUnit(leftValue / rightValue, unit);
             }

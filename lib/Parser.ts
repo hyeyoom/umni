@@ -185,18 +185,18 @@ export class Parser {
         return new ASTNode.FunctionCall(name, args);
     }
 
-    private expect(expectedType: new (...args: any[]) => Token) {
+    private expect(expectedType: new (...args: never[]) => Token) {
         const token = this.currentToken();
         if (token instanceof expectedType) {
             this.consume();
         } else {
             throw new Error(
-                `Expected token ${expectedType.name} but found ${token.constructor.name}`
+                `Expected token ${expectedType.name} but found ${token}`
             );
         }
     }
 
-    private match(expectedType: new (...args: any[]) => Token): boolean {
+    private match(expectedType: new (...args: never[]) => Token): boolean {
         const token = this.currentToken();
         if (token instanceof expectedType) {
             this.consume();
