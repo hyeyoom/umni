@@ -1,27 +1,52 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* app/globals.css */
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #01181f;
+    color: #ffffff;
+    font-size: 1.5rem;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+
+.container {
+    display: flex;
+    flex-direction: column;
+    padding: 5rem;
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.input-box {
+    background: transparent;
+    border: none;
+    color: #e3dcdc;
+    width: 70%;
+    font-size: 1.5rem; /* 입력 폰트 크기를 더 크게 설정 */
+    outline: none;
+}
+
+.input-box:focus {
+    outline: none; /* 포커스 시에도 테두리 없음 */
+}
+
+.result {
+    color: #25c725;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    font-size: 1.5rem;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.result:hover {
+    background-color: #25c725;
+    color: #01181f;
+    padding: 0.2rem;
+    border-radius: 4px;
 }

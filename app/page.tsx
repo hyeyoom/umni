@@ -1,101 +1,77 @@
-import Image from "next/image";
+// app/page.tsx
+"use client";
+
+import React, {useRef, useState} from "react";
+import {Environment} from "@/lib/Environment";
+import {Interpreter} from "@/lib/Interpreter";
+import {Lexer} from "@/lib/Lexer";
+import {Parser} from "@/lib/Parser";
+import './globals.css';
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    const [lines, setLines] = useState([{expression: "", result: ""}]);
+    const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    const environmentRef = useRef(new Environment());
+    const interpreterRef = useRef(new Interpreter(environmentRef.current));
+
+    const handleInputChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+        const newLines = [...lines];
+        newLines[index].expression = e.target.value;
+
+        newLines.forEach((line, i) => {
+            try {
+                const expr = line.expression
+                console.log(expr);
+                const lexer = new Lexer(expr);
+                const tokens = lexer.tokenize();
+                const parser = new Parser(tokens);
+                const ast = parser.parse();
+                const evaluatedResult = interpreterRef.current.interpret(ast);
+                newLines[i].result = evaluatedResult.toString()
+            } catch (error) {
+                console.log(error)
+                newLines[i].result = "";
+            }
+        });
+
+        setLines(newLines);
+    };
+
+    const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            const newLines = [...lines, {expression: "", result: ""}];
+            setLines(newLines);
+
+            setTimeout(() => {
+                inputRefs.current[index + 1]?.focus();
+            }, 0);
+        }
+    };
+
+    const handleResultClick = (result: string) => {
+        navigator.clipboard.writeText(result);
+    };
+
+    return (
+        <div className="container">
+            {lines.map((line, index) => (
+                <div className="row" key={index}>
+                    <input
+                        ref={(el) => (inputRefs.current[index] = el)}
+                        className="input-box"
+                        value={line.expression}
+                        onChange={(e) => handleInputChange(index, e)}
+                        onKeyDown={(e) => handleKeyPress(e, index)}
+                        autoFocus={index === lines.length - 1}
+                        placeholder={"Empty Line"}
+                    />
+                    <span className="result" onClick={() => handleResultClick(line.result)}>
+            {line.result}
+          </span>
+                </div>
+            ))}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+    );
 }

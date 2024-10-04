@@ -49,7 +49,7 @@ export class Interpreter {
             return value;
         } else if (node instanceof ASTNode.FunctionDeclaration) {
             this.environment.functions.set(node.name, node);
-            return new ComputedValue.NoOp();
+            return new ComputedValue.FunctionIsDefined();
         } else if (node instanceof ASTNode.FunctionCall) {
             const builtInFunction = this.environment.builtInFunctions.get(node.name);
             if (builtInFunction) {
@@ -95,7 +95,7 @@ export class Interpreter {
                 value instanceof ComputedValue.Natural ||
                 value instanceof ComputedValue.Real
             ) {
-                const sourceUnit = this.getUnit(node.expression) || targetUnit;
+                const sourceUnit = this.getUnit(node.expression) || node.targetUnit;
                 const rawValue =
                     value instanceof ComputedValue.Natural
                         ? value.value
@@ -104,9 +104,9 @@ export class Interpreter {
                 const convertedValue = this.performUnitConversion(
                     rawValue,
                     sourceUnit,
-                    targetUnit
+                    node.targetUnit
                 );
-                return new ComputedValue.WithUnit(convertedValue, targetUnit);
+                return new ComputedValue.WithUnit(convertedValue, node.targetUnit);
             } else {
                 throw new Error('Cannot convert non-numeric value');
             }

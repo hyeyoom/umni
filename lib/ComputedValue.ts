@@ -51,9 +51,9 @@ export namespace ComputedValue {
         }
     }
 
-    export class NoOp extends ComputedValue {
+    export class FunctionIsDefined extends ComputedValue {
         toString(): string {
-            return '';
+            return 'Function is defined!';
         }
     }
 
