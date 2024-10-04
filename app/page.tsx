@@ -59,7 +59,6 @@ export default function Home() {
             {lines.map((line, index) => (
                 <div className="row" key={index}>
                     <input
-                        ref={(el) => (inputRefs.current[index] = el)}
                         className="input-box"
                         value={line.expression}
                         onChange={(e) => handleInputChange(index, e)}
