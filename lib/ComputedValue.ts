@@ -53,7 +53,7 @@ export namespace ComputedValue {
 
     export class FunctionIsDefined extends ComputedValue {
         toString(): string {
-            return 'Function is defined!';
+            return 'Successfully defined';
         }
     }
 

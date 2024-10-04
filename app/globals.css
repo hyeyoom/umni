@@ -8,11 +8,10 @@ body {
     font-size: 1.5rem;
 }
 
-
 .container {
     display: flex;
     flex-direction: column;
-    padding: 5rem;
+    padding: 5rem 15rem;
 }
 
 .row {
@@ -27,12 +26,12 @@ body {
     border: none;
     color: #e3dcdc;
     width: 70%;
-    font-size: 1.5rem; /* 입력 폰트 크기를 더 크게 설정 */
+    font-size: 1.5rem;
     outline: none;
 }
 
 .input-box:focus {
-    outline: none; /* 포커스 시에도 테두리 없음 */
+    outline: none;
 }
 
 .result {
@@ -42,11 +41,32 @@ body {
     font-size: 1.5rem;
     text-align: right;
     white-space: nowrap;
+    padding: 0.2rem;
+    border-radius: 4px;
+    box-sizing: border-box;
 }
 
 .result:hover {
     background-color: #25c725;
     color: #01181f;
-    padding: 0.2rem;
-    border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+    body {
+        font-size: 1.2rem;
+    }
+
+    .container {
+        padding: 2rem;
+    }
+
+    .input-box {
+        width: 100%;
+        font-size: 1.2rem;
+    }
+
+    .result {
+        font-size: 1.2rem;
+        padding: 0.2rem;
+    }
 }
