@@ -65,7 +65,10 @@ export class Interpreter {
                     throw new Error(`Argument count mismatch for function: ${node.name}`);
                 }
 
-                const localEnv = new Environment();
+                const localEnv = new Environment(
+                    this.environment.variables,
+                    this.environment.functions,
+                );
 
                 for (let i = 0; i < functionNode.parameters.length; i++) {
                     const argValue = this.interpret(node.args[i]);
