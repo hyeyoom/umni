@@ -15,27 +15,35 @@ export default function Home() {
     const environmentRef = useRef(new Environment());
     const interpreterRef = useRef(new Interpreter(environmentRef.current));
 
+    const [debounceTimeout, setDebounceTimeout] = useState<number | undefined>(undefined);
+
     const handleInputChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
         const newLines = [...lines];
         newLines[index].expression = e.target.value;
 
-        newLines.forEach((line, i) => {
-            try {
-                const expr = line.expression
-                console.log(expr);
-                const lexer = new Lexer(expr);
-                const tokens = lexer.tokenize();
-                const parser = new Parser(tokens);
-                const ast = parser.parse();
-                const evaluatedResult = interpreterRef.current.interpret(ast);
-                newLines[i].result = evaluatedResult.toString()
-            } catch (error) {
-                console.log(error)
-                newLines[i].result = "";
-            }
-        });
+        if (debounceTimeout) {
+            clearTimeout(debounceTimeout);
+        }
+        const timeout = window.setTimeout(() => {
+            newLines.forEach((line, i) => {
+                try {
+                    const expr = line.expression
+                    console.log(expr);
+                    const lexer = new Lexer(expr);
+                    const tokens = lexer.tokenize();
+                    const parser = new Parser(tokens);
+                    const ast = parser.parse();
+                    const evaluatedResult = interpreterRef.current.interpret(ast);
+                    newLines[i].result = evaluatedResult.toString()
+                } catch (error) {
+                    console.log(error)
+                    newLines[i].result = "";
+                }
+            });
+            setLines(newLines);
+        }, 300);
 
-        setLines(newLines);
+        setDebounceTimeout(timeout);
     };
 
     const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
