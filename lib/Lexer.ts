@@ -16,6 +16,8 @@ export class Lexer {
                 this.position++;
             } else if (/\d/.test(currentChar)) {
                 this.tokenizeNumber();
+            } else if (/[가-힣]/.test(currentChar)) {
+                this.tokenizeIdentifierOrUnit();
             } else if (/[a-zA-Z]/.test(currentChar)) {
                 this.tokenizeIdentifierOrUnit();
             } else if (currentChar === '"' || currentChar === "'") {
@@ -159,6 +161,6 @@ export class Lexer {
     }
 
     private isIdentifierCharacter(char: string): boolean {
-        return /[a-zA-Z0-9_]/.test(char);
+        return /[a-zA-Z0-9_가-힣]/.test(char);
     }
 }
