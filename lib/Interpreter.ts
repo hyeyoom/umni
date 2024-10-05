@@ -185,26 +185,7 @@ export class Interpreter {
 
         // WithUnit addition
         if (left instanceof ComputedValue.WithUnit || right instanceof ComputedValue.WithUnit) {
-            const leftValue =
-                left instanceof ComputedValue.WithUnit
-                    ? left.value
-                    : left instanceof ComputedValue.Number.Real
-                        ? left.value
-                        : left instanceof ComputedValue.Number.Natural
-                            ? left.value
-                            : null;
-            const rightValue =
-                right instanceof ComputedValue.WithUnit
-                    ? right.value
-                    : right instanceof ComputedValue.Number.Real
-                        ? right.value
-                        : right instanceof ComputedValue.Number.Natural
-                            ? right.value
-                            : null;
-            const unit = left instanceof ComputedValue.WithUnit ? left.unit : right instanceof ComputedValue.WithUnit ? right.unit : null;
-            if (leftValue !== null && rightValue !== null && unit) {
-                return new ComputedValue.WithUnit(leftValue + rightValue, unit);
-            }
+            return this.handleWithUnit(left, right, '+')
         }
 
         // String concatenation
@@ -249,26 +230,7 @@ export class Interpreter {
         }
 
         if (left instanceof ComputedValue.WithUnit || right instanceof ComputedValue.WithUnit) {
-            const leftValue =
-                left instanceof ComputedValue.WithUnit
-                    ? left.value
-                    : left instanceof ComputedValue.Number.Real
-                        ? left.value
-                        : left instanceof ComputedValue.Number.Natural
-                            ? left.value
-                            : null;
-            const rightValue =
-                right instanceof ComputedValue.WithUnit
-                    ? right.value
-                    : right instanceof ComputedValue.Number.Real
-                        ? right.value
-                        : right instanceof ComputedValue.Number.Natural
-                            ? right.value
-                            : null;
-            const unit = left instanceof ComputedValue.WithUnit ? left.unit : right instanceof ComputedValue.WithUnit ? right.unit : null;
-            if (leftValue !== null && rightValue !== null && unit) {
-                return new ComputedValue.WithUnit(leftValue - rightValue, unit);
-            }
+            return this.handleWithUnit(left, right, '-')
         }
 
         throw new Error(`Invalid operands for '-': ${left} and ${right}`);
@@ -291,26 +253,7 @@ export class Interpreter {
         }
 
         if (left instanceof ComputedValue.WithUnit || right instanceof ComputedValue.WithUnit) {
-            const leftValue =
-                left instanceof ComputedValue.WithUnit
-                    ? left.value
-                    : left instanceof ComputedValue.Number.Real
-                        ? left.value
-                        : left instanceof ComputedValue.Number.Natural
-                            ? left.value
-                            : null;
-            const rightValue =
-                right instanceof ComputedValue.WithUnit
-                    ? right.value
-                    : right instanceof ComputedValue.Number.Real
-                        ? right.value
-                        : right instanceof ComputedValue.Number.Natural
-                            ? right.value
-                            : null;
-            const unit = left instanceof ComputedValue.WithUnit ? left.unit : right instanceof ComputedValue.WithUnit ? right.unit : null;
-            if (leftValue !== null && rightValue !== null && unit) {
-                return new ComputedValue.WithUnit(leftValue * rightValue, unit);
-            }
+            return this.handleWithUnit(left, right, '*')
         }
 
         // String multiplication
@@ -340,28 +283,49 @@ export class Interpreter {
         }
 
         if (left instanceof ComputedValue.WithUnit || right instanceof ComputedValue.WithUnit) {
-            const leftValue =
-                left instanceof ComputedValue.WithUnit
-                    ? left.value
-                    : left instanceof ComputedValue.Number.Real
-                        ? left.value
-                        : left instanceof ComputedValue.Number.Natural
-                            ? left.value
-                            : null;
-            const rightValue =
-                right instanceof ComputedValue.WithUnit
-                    ? right.value
-                    : right instanceof ComputedValue.Number.Real
-                        ? right.value
-                        : right instanceof ComputedValue.Number.Natural
-                            ? right.value
-                            : null;
-            const unit = left instanceof ComputedValue.WithUnit ? left.unit : right instanceof ComputedValue.WithUnit ? right.unit : null;
-            if (leftValue !== null && rightValue !== null && unit) {
-                return new ComputedValue.WithUnit(leftValue / rightValue, unit);
-            }
+            return this.handleWithUnit(left, right, '/')
         }
 
+        throw new Error(`Invalid operands for '/': ${left} and ${right}`);
+    }
+
+    private handleWithUnit(
+        left: ComputedValue,
+        right: ComputedValue,
+        operator: string,
+    ): ComputedValue {
+        const targetUnit = left instanceof ComputedValue.WithUnit
+            ? left.unit
+            : right instanceof ComputedValue.WithUnit
+                ? right.unit
+                : null;
+
+        if (targetUnit) {
+            const leftValue = left instanceof ComputedValue.WithUnit
+                ? this.performUnitConversion(left.value, left.unit, targetUnit)
+                : (left instanceof ComputedValue.Number.Real || left instanceof ComputedValue.Number.Natural
+                    ? left.value
+                    : null);
+
+            const rightValue = right instanceof ComputedValue.WithUnit
+                ? this.performUnitConversion(right.value, right.unit, targetUnit)
+                : (right instanceof ComputedValue.Number.Real || right instanceof ComputedValue.Number.Natural
+                    ? right.value
+                    : null);
+
+            if (leftValue !== null && rightValue !== null) {
+                switch (operator) {
+                    case '+':
+                        return new ComputedValue.WithUnit(leftValue + rightValue, targetUnit);
+                    case '-':
+                        return new ComputedValue.WithUnit(leftValue - rightValue, targetUnit);
+                    case '*':
+                        return new ComputedValue.WithUnit(leftValue * rightValue, targetUnit);
+                    case '/':
+                        return new ComputedValue.WithUnit(leftValue / rightValue, targetUnit);
+                }
+            }
+        }
         throw new Error(`Invalid operands for '/': ${left} and ${right}`);
     }
 
