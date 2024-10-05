@@ -27,6 +27,8 @@ export class Environment {
         ]);
 
         // Built-in Functions: Use provided functions or default ones if none are provided
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-expect-error
         this.builtInFunctions = builtInFunctions ?? new Map([
             [
                 'sin',
@@ -51,6 +53,50 @@ export class Environment {
                     const arg = args[0];
                     if (arg instanceof ComputedValue.Real || arg instanceof ComputedValue.Natural) {
                         return new ComputedValue.Real(Math.cos(arg.valueOf() as number));
+                    } else {
+                        throw new Error('Invalid argument for cos function');
+                    }
+                },
+            ],
+            [
+                'length',
+                (args: ComputedValue[]) => {
+                    if (args.length !== 1) {
+                        throw new Error('length function requires one argument');
+                    }
+                    const arg = args[0];
+                    if (arg instanceof ComputedValue.StringValue) {
+                        return new ComputedValue.Natural(arg.value.length);
+                    } else {
+                        throw new Error('Invalid argument for cos function');
+                    }
+                },
+            ],
+            [
+                'b64Encode',
+                (args: ComputedValue[]) => {
+                    if (args.length !== 1) {
+                        throw new Error('b64Encode function requires one argument');
+                    }
+                    const arg = args[0];
+                    if (arg instanceof ComputedValue.StringValue) {
+                        const encoded = Buffer.from(arg.value, 'utf8').toString('base64');
+                        return new ComputedValue.StringValue(encoded);
+                    } else {
+                        throw new Error('Invalid argument for cos function');
+                    }
+                },
+            ],
+            [
+                'b64Decode',
+                (args: ComputedValue[]) => {
+                    if (args.length !== 1) {
+                        throw new Error('b64Encode function requires one argument');
+                    }
+                    const arg = args[0];
+                    if (arg instanceof ComputedValue.StringValue) {
+                        const decoded = Buffer.from(arg.value, 'base64').toString('utf8');
+                        return new ComputedValue.StringValue(decoded);
                     } else {
                         throw new Error('Invalid argument for cos function');
                     }
