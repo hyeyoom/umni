@@ -58,6 +58,6 @@ export namespace ComputedValue {
     }
 
     export function formatNumber(value: number): string {
-        return value.toLocaleString().toString();
+        return value.toString();
     }
 }
