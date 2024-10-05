@@ -18,10 +18,8 @@ async function main() {
             const t1 = Date.now();
             const lexer = new Lexer(input);
             const tokens = lexer.tokenize();
-            console.log(tokens);
             const parser = new Parser(tokens);
             const ast = parser.parse();
-            console.log(ast);
             const result = interpreter.interpret(ast);
             const t2 = Date.now();
             console.log(`${result} (in ${t2 - t1} ms)`);

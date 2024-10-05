@@ -1,12 +1,13 @@
 // Parser.ts
 
-import { Token } from './Token';
-import { ASTNode } from './ASTNode';
+import {Token} from './Token';
+import {ASTNode} from './ASTNode';
 
 export class Parser {
     private position = 0;
 
-    constructor(private tokens: Token[]) {}
+    constructor(private tokens: Token[]) {
+    }
 
     parse(): ASTNode {
         return this.parseStatement();
@@ -31,7 +32,32 @@ export class Parser {
     }
 
     private parseExpression(): ASTNode {
-        return this.parseToConversion();
+        return this.parseComparison();
+    }
+
+    private parseComparison(): ASTNode {
+        let node = this.parseToConversion()
+        while (true) {
+            const token = this.currentToken()
+            if (
+                token instanceof Token.SymbolicOperator &&
+                (
+                    token.symbol === '>' ||
+                    token.symbol === '>=' ||
+                    token.symbol === '<' ||
+                    token.symbol === '<=' ||
+                    token.symbol === '==' ||
+                    token.symbol === '!='
+                )
+            ) {
+                this.consume();
+                const right = this.parseAddition()
+                node = new ASTNode.BinaryOperation(node, token.symbol, right);
+            } else {
+                break;
+            }
+        }
+        return node
     }
 
     private parseToConversion(): ASTNode {
@@ -105,6 +131,10 @@ export class Parser {
             this.consume();
             const operand = this.parseUnary();
             return new ASTNode.UnaryOperation('-', operand);
+        } else if (token instanceof Token.SymbolicOperator && token.symbol === '!') {
+            this.consume()
+            const operand = this.parseUnary();
+            return new ASTNode.UnaryOperation('!', operand)
         } else {
             return this.parsePrimary();
         }

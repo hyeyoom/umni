@@ -21,9 +21,13 @@ export class Environment {
         this.functions = functions ?? new Map();
 
         // Constants: Use provided constants or default ones if none are provided
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-expect-error
         this.constants = constants ?? new Map([
             ['pi', new ComputedValue.Real(Math.PI)],
             ['e', new ComputedValue.Real(Math.E)],
+            ['true', new ComputedValue.LogicalValue(true)],
+            ['false', new ComputedValue.LogicalValue(false)],
         ]);
 
         // Built-in Functions: Use provided functions or default ones if none are provided

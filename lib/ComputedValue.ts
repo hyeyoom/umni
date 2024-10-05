@@ -51,6 +51,16 @@ export namespace ComputedValue {
         }
     }
 
+    export class LogicalValue extends ComputedValue {
+        constructor(public value: boolean) {
+            super();
+        }
+
+        toString(): string {
+            return this.value.toString();
+        }
+    }
+
     export class FunctionIsDefined extends ComputedValue {
         toString(): string {
             return 'function';

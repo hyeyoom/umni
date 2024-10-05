@@ -1,12 +1,13 @@
 // Lexer.ts
 
-import { Token } from './Token';
+import {Token} from './Token';
 
 export class Lexer {
     private position = 0;
     private tokens: Token[] = [];
 
-    constructor(private input: string) {}
+    constructor(private input: string) {
+    }
 
     tokenize(): Token[] {
         while (this.position < this.input.length) {
@@ -23,8 +24,13 @@ export class Lexer {
             } else if (currentChar === '"' || currentChar === "'") {
                 this.tokenizeStringLiteral(currentChar);
             } else if (currentChar === '=') {
-                this.tokens.push(new Token.Assign());
-                this.position++;
+                if (this.input[this.position + 1] === '=') {
+                    this.tokens.push(new Token.SymbolicOperator(`${currentChar}${this.input[this.position + 1]}`))
+                    this.position += 2;
+                } else {
+                    this.tokens.push(new Token.Assign());
+                    this.position++;
+                }
             } else if (currentChar === '(') {
                 this.tokens.push(new Token.LeftParen());
                 this.position++;
@@ -34,6 +40,14 @@ export class Lexer {
             } else if (currentChar === ',') {
                 this.tokens.push(new Token.Comma());
                 this.position++;
+            } else if ('><!'.includes(currentChar)) {
+                if (this.input[this.position + 1] === '=') {
+                    this.tokens.push(new Token.SymbolicOperator(`${currentChar}${this.input[this.position + 1]}`))
+                    this.position += 2;
+                } else {
+                    this.tokens.push(new Token.SymbolicOperator(currentChar))
+                    this.position++;
+                }
             } else if ('+-*/'.includes(currentChar)) {
                 this.tokens.push(new Token.SymbolicOperator(currentChar));
                 this.position++;

@@ -130,6 +130,12 @@ export class Interpreter {
             } else {
                 throw new Error(`Invalid operand for unary '-': ${operand}`);
             }
+        } else if (operator === '!') {
+            if (operand instanceof ComputedValue.LogicalValue) {
+                return new ComputedValue.LogicalValue(!operand.value);
+            } else {
+                throw new Error(`Invalid operand for unary '!': ${operand}`);
+            }
         } else {
             throw new Error(`Unknown unary operator: ${operator}`);
         }
@@ -161,9 +167,78 @@ export class Interpreter {
                 return this.handleMultiplication(left, right);
             case '/':
                 return this.handleDivision(left, right);
+            case '>':
+            case '>=':
+            case '<':
+            case '<=':
+            case '==':
+            case '!=':
+                return this.handleComparison(left, right, operator);
             default:
                 throw new Error(`Unknown operator: ${operator}`);
         }
+    }
+
+    private handleComparison(
+        left: ComputedValue,
+        right: ComputedValue,
+        operator: string,
+    ): ComputedValue.LogicalValue {
+        if (left instanceof ComputedValue.Number && right instanceof ComputedValue.Number) {
+            const leftValue = left instanceof ComputedValue.Real
+                ? left.value
+                : left instanceof ComputedValue.Natural
+                    ? left.value
+                    : left instanceof ComputedValue.WithUnit
+                        ? left.value
+                        : null
+
+            const rightValue = right instanceof ComputedValue.Real
+                ? right.value
+                : right instanceof ComputedValue.Natural
+                    ? right.value
+                    : right instanceof ComputedValue.WithUnit
+                        ? right.value
+                        : null
+
+            if (leftValue === null) {
+                throw new Error(`left operand cannot be null! ${leftValue}`)
+            }
+
+            if (rightValue === null) {
+                throw new Error(`right operand cannot be null! ${rightValue}`)
+            }
+
+            switch (operator) {
+                case '>':
+                    return new ComputedValue.LogicalValue(leftValue > rightValue)
+                case '>=':
+                    return new ComputedValue.LogicalValue(leftValue >= rightValue)
+                case '<':
+                    return new ComputedValue.LogicalValue(leftValue < rightValue)
+                case '<=':
+                    return new ComputedValue.LogicalValue(leftValue <= rightValue)
+                case '==':
+                    return new ComputedValue.LogicalValue(leftValue == rightValue)
+                case '!=':
+                    return new ComputedValue.LogicalValue(leftValue != rightValue)
+                default:
+                    throw new Error(`Unable to use ${operator}`);
+            }
+        }
+
+        if (left instanceof ComputedValue.LogicalValue && right instanceof ComputedValue.LogicalValue) {
+            switch (operator) {
+                case '==':
+                    return new ComputedValue.LogicalValue(left.value == right.value)
+                case '!=':
+                    return new ComputedValue.LogicalValue(left.value != right.value)
+                default:
+                    throw new Error(`Unable to use ${operator}`);
+            }
+        }
+
+        throw new Error("Unable to reach here.")
     }
 
     private handleAddition(
