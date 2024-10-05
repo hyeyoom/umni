@@ -27,7 +27,7 @@ export namespace ComputedValue {
         }
 
         toString(): string {
-            return this.value.toString();
+            return ComputedValue.formatNumber(this.value);
         }
     }
 
@@ -58,6 +58,6 @@ export namespace ComputedValue {
     }
 
     export function formatNumber(value: number): string {
-        return value.toString();
+        return value.toLocaleString().toString();
     }
 }
