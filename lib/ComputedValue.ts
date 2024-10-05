@@ -57,7 +57,18 @@ export namespace ComputedValue {
         }
     }
 
-    export function formatNumber(value: number): string {
-        return value.toString();
+    export function formatNumber(num: number): string {
+        const isNegative = num < 0;
+        const absoluteNum = Math.abs(num);
+
+        const [integerPart, decimalPartRaw] = absoluteNum.toString().split('.');
+        const integerWithCommas = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+        let formattedDecimal = '';
+        if (decimalPartRaw !== undefined && decimalPartRaw.length > 0) {
+            formattedDecimal = '.' + decimalPartRaw.slice(0, 4);
+        }
+
+        return (isNegative ? '-' : '') + integerWithCommas + formattedDecimal;
     }
 }
