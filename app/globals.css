@@ -41,8 +41,9 @@ body {
     font-size: 1.5rem;
     text-align: right;
     white-space: nowrap;
-    padding: 0.2rem;
-    border-radius: 4px;
+    padding: 0.5rem;
+    border-radius: 8px;
+    font-weight: 600;
     box-sizing: border-box;
 }
 
