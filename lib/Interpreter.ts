@@ -1,33 +1,43 @@
 // Interpreter.ts
-
-import {ASTNode} from './ASTNode';
-import {ComputedValue} from './ComputedValue';
+import {
+    AssignmentNode,
+    ASTNode,
+    BinaryOperationNode,
+    FunctionCallNode,
+    FunctionDeclarationNode,
+    NaturalNode,
+    RealNode,
+    StringLiteralNode,
+    UnaryOperationNode,
+    UnitConversionNode,
+    VariableNode,
+    WithUnitNode
+} from './ASTNode';
+import {
+    ComputedValue,
+    FunctionIsDefined,
+    LogicalValue,
+    NaturalValue,
+    RealValue,
+    StringValue,
+    WithUnitValue
+} from './ComputedValue';
 import {Environment} from './Environment';
+import {UnitConverter} from './UnitConverter';
 
 export class Interpreter {
-    private unitConversion: { [key: string]: number } = {
-        m: 1.0,
-        km: 1000.0,
-        cm: 0.01,
-        mm: 0.001,
-        kb: 1024.0,
-        mb: 1024.0 * 1024,
-        gb: 1024.0 * 1024 * 1024,
-    };
-
-    constructor(private environment: Environment = new Environment()) {
-    }
+    constructor(private environment: Environment = new Environment()) {}
 
     interpret(node: ASTNode): ComputedValue {
-        if (node instanceof ASTNode.Natural) {
-            return new ComputedValue.Natural(node.value);
-        } else if (node instanceof ASTNode.Real) {
-            return new ComputedValue.Real(node.value);
-        } else if (node instanceof ASTNode.WithUnit) {
-            return new ComputedValue.WithUnit(node.value, node.unit);
-        } else if (node instanceof ASTNode.StringLiteral) {
-            return new ComputedValue.StringValue(node.value);
-        } else if (node instanceof ASTNode.Variable) {
+        if (node instanceof RealNode) {
+            return new RealValue(node.value);
+        } else if (node instanceof NaturalNode) {
+            return new NaturalValue(node.value);
+        } else if (node instanceof WithUnitNode) {
+            return new WithUnitValue(node.value, node.unit);
+        } else if (node instanceof StringLiteralNode) {
+            return new StringValue(node.value);
+        } else if (node instanceof VariableNode) {
             const value =
                 this.environment.variables.get(node.name) ||
                 this.environment.constants.get(node.name);
@@ -37,21 +47,21 @@ export class Interpreter {
             } else {
                 throw new Error(`Undefined variable: ${node.name}`);
             }
-        } else if (node instanceof ASTNode.UnaryOperation) {
+        } else if (node instanceof UnaryOperationNode) {
             const operand = this.interpret(node.operand);
             return this.evaluateUnaryOperation(node.operator, operand);
-        } else if (node instanceof ASTNode.BinaryOperation) {
+        } else if (node instanceof BinaryOperationNode) {
             const left = this.interpret(node.left);
             const right = this.interpret(node.right);
             return this.evaluateBinaryOperation(left, node.operator, right);
-        } else if (node instanceof ASTNode.Assignment) {
+        } else if (node instanceof AssignmentNode) {
             const value = this.interpret(node.value);
             this.assignValue(node.left, value);
             return value;
-        } else if (node instanceof ASTNode.FunctionDeclaration) {
+        } else if (node instanceof FunctionDeclarationNode) {
             this.environment.functions.set(node.name, node);
-            return new ComputedValue.FunctionIsDefined();
-        } else if (node instanceof ASTNode.FunctionCall) {
+            return new FunctionIsDefined();
+        } else if (node instanceof FunctionCallNode) {
             const builtInFunction = this.environment.builtInFunctions.get(node.name);
             if (builtInFunction) {
                 const args = node.args.map((arg) => this.interpret(arg));
@@ -65,10 +75,12 @@ export class Interpreter {
                     throw new Error(`Argument count mismatch for function: ${node.name}`);
                 }
 
-                const localEnv = new Environment(
-                    this.environment.variables,
-                    this.environment.functions,
-                );
+                const localEnv = new Environment({
+                    variables: new Map(this.environment.variables),
+                    functions: this.environment.functions,
+                    constants: new Map(this.environment.constants),
+                    builtInFunctions: this.environment.builtInFunctions
+                });
 
                 for (let i = 0; i < functionNode.parameters.length; i++) {
                     const argValue = this.interpret(node.args[i]);
@@ -78,34 +90,15 @@ export class Interpreter {
                 const interpreter = new Interpreter(localEnv);
                 return interpreter.interpret(functionNode.body);
             }
-        } else if (node instanceof ASTNode.UnitConversion) {
+        } else if (node instanceof UnitConversionNode) {
             const value = this.interpret(node.expression);
 
-            if (value instanceof ComputedValue.WithUnit) {
-                const sourceUnit = value.unit;
-                const targetUnit = node.targetUnit;
-                const convertedValue = this.performUnitConversion(
-                    value.value,
-                    sourceUnit,
-                    targetUnit
-                );
-                return new ComputedValue.WithUnit(convertedValue, targetUnit);
-            } else if (
-                value instanceof ComputedValue.Natural ||
-                value instanceof ComputedValue.Real
-            ) {
-                const sourceUnit = this.getUnit(node.expression) || node.targetUnit;
-                const rawValue =
-                    value instanceof ComputedValue.Natural
-                        ? value.value
-                        : value.value;
-
-                const convertedValue = this.performUnitConversion(
-                    rawValue,
-                    sourceUnit,
-                    node.targetUnit
-                );
-                return new ComputedValue.WithUnit(convertedValue, node.targetUnit);
+            if (value instanceof WithUnitValue) {
+                const convertedValue = UnitConverter.convert(value.value, value.unit, node.targetUnit);
+                return new WithUnitValue(convertedValue, node.targetUnit);
+            } else if (value instanceof RealValue || value instanceof NaturalValue) {
+                const convertedValue = UnitConverter.convert(value.value, 'm', node.targetUnit); // Assuming default source unit
+                return new WithUnitValue(convertedValue, node.targetUnit);
             } else {
                 throw new Error('Cannot convert non-numeric value');
             }
@@ -119,37 +112,30 @@ export class Interpreter {
         operand: ComputedValue
     ): ComputedValue {
         if (operator === '-') {
-            if (operand instanceof ComputedValue.Number) {
-                if (operand instanceof ComputedValue.Real) {
-                    return new ComputedValue.Real(-operand.value);
-                } else if (operand instanceof ComputedValue.Natural) {
-                    return new ComputedValue.Natural(-operand.value);
-                } else if (operand instanceof ComputedValue.WithUnit) {
-                    return new ComputedValue.WithUnit(-operand.value, operand.unit);
-                }
-            } else {
-                throw new Error(`Invalid operand for unary '-': ${operand}`);
+            if (operand instanceof RealValue) {
+                return new RealValue(-operand.value);
+            } else if (operand instanceof NaturalValue) {
+                return new NaturalValue(-operand.value);
+            } else if (operand instanceof WithUnitValue) {
+                return new WithUnitValue(-operand.value, operand.unit);
             }
+            throw new Error(`Invalid operand for unary '-': ${operand.toString()}`);
         } else if (operator === '!') {
-            if (operand instanceof ComputedValue.LogicalValue) {
-                return new ComputedValue.LogicalValue(!operand.value);
-            } else {
-                throw new Error(`Invalid operand for unary '!': ${operand}`);
+            if (operand instanceof LogicalValue) {
+                return new LogicalValue(!operand.value);
             }
-        } else {
-            throw new Error(`Unknown unary operator: ${operator}`);
+            throw new Error(`Invalid operand for unary '!': ${operand.toString()}`);
         }
-        // 편법 -_-
-        return new ComputedValue.Natural(0)
+        throw new Error(`Unknown unary operator: ${operator}`);
     }
 
     private assignValue(target: ASTNode, value: ComputedValue): void {
-        if (target instanceof ASTNode.Variable) {
+        if (target instanceof VariableNode) {
             this.environment.variables.set(target.name, value);
-        } else if (target instanceof ASTNode.Assignment) {
+        } else if (target instanceof AssignmentNode) {
             this.assignValue(target.left, value);
         } else {
-            throw new Error(`Invalid assignment target: ${target}`);
+            throw new Error(`Invalid assignment target: ${target.constructor.name}`);
         }
     }
 
@@ -183,109 +169,87 @@ export class Interpreter {
         left: ComputedValue,
         right: ComputedValue,
         operator: string,
-    ): ComputedValue.LogicalValue {
-        if (left instanceof ComputedValue.Number && right instanceof ComputedValue.Number) {
-            const leftValue = left instanceof ComputedValue.Real
-                ? left.value
-                : left instanceof ComputedValue.Natural
-                    ? left.value
-                    : left instanceof ComputedValue.WithUnit
-                        ? left.value
-                        : null
-
-            const rightValue = right instanceof ComputedValue.Real
-                ? right.value
-                : right instanceof ComputedValue.Natural
-                    ? right.value
-                    : right instanceof ComputedValue.WithUnit
-                        ? right.value
-                        : null
-
-            if (leftValue === null) {
-                throw new Error(`left operand cannot be null! ${leftValue}`)
-            }
+    ): LogicalValue {
+        if (left instanceof RealValue || left instanceof NaturalValue || left instanceof WithUnitValue) {
+            const leftValue = left.value;
+            const rightValue = right instanceof RealValue || right instanceof NaturalValue || right instanceof WithUnitValue ? right.value : null;
 
             if (rightValue === null) {
-                throw new Error(`right operand cannot be null! ${rightValue}`)
+                throw new Error(`Right operand cannot be null for operator ${operator}`);
             }
 
             switch (operator) {
                 case '>':
-                    return new ComputedValue.LogicalValue(leftValue > rightValue)
+                    return new LogicalValue(leftValue > rightValue);
                 case '>=':
-                    return new ComputedValue.LogicalValue(leftValue >= rightValue)
+                    return new LogicalValue(leftValue >= rightValue);
                 case '<':
-                    return new ComputedValue.LogicalValue(leftValue < rightValue)
+                    return new LogicalValue(leftValue < rightValue);
                 case '<=':
-                    return new ComputedValue.LogicalValue(leftValue <= rightValue)
+                    return new LogicalValue(leftValue <= rightValue);
                 case '==':
-                    return new ComputedValue.LogicalValue(leftValue == rightValue)
+                    return new LogicalValue(leftValue === rightValue);
                 case '!=':
-                    return new ComputedValue.LogicalValue(leftValue != rightValue)
+                    return new LogicalValue(leftValue !== rightValue);
                 default:
-                    throw new Error(`Unable to use ${operator}`);
+                    throw new Error(`Unable to use operator: ${operator}`);
             }
         }
 
-        if (left instanceof ComputedValue.LogicalValue && right instanceof ComputedValue.LogicalValue) {
+        if (left instanceof LogicalValue && right instanceof LogicalValue) {
             switch (operator) {
                 case '==':
-                    return new ComputedValue.LogicalValue(left.value == right.value)
+                    return new LogicalValue(left.value === right.value);
                 case '!=':
-                    return new ComputedValue.LogicalValue(left.value != right.value)
+                    return new LogicalValue(left.value !== right.value);
                 default:
-                    throw new Error(`Unable to use ${operator}`);
+                    throw new Error(`Unable to use operator: ${operator}`);
             }
         }
 
-        throw new Error("Unable to reach here.")
+        throw new Error(`Unsupported operands for operator ${operator}: ${left.toString()} and ${right.toString()}`);
     }
 
     private handleAddition(
         left: ComputedValue,
         right: ComputedValue
     ): ComputedValue {
-        // Numeric addition
         if (
-            (left instanceof ComputedValue.Real || left instanceof ComputedValue.Natural) &&
-            (right instanceof ComputedValue.Real || right instanceof ComputedValue.Natural)
+            (left instanceof RealValue || left instanceof NaturalValue) &&
+            (right instanceof RealValue || right instanceof NaturalValue)
         ) {
-            const leftValue = left instanceof ComputedValue.Real ? left.value : left.value;
-            const rightValue = right instanceof ComputedValue.Real ? right.value : right.value;
-            const result = leftValue + rightValue;
+            const result = left.value + right.value;
             return Number.isInteger(result)
-                ? new ComputedValue.Natural(result)
-                : new ComputedValue.Real(result);
+                ? new NaturalValue(result)
+                : new RealValue(result);
         }
 
-        // WithUnit addition
-        if (left instanceof ComputedValue.WithUnit || right instanceof ComputedValue.WithUnit) {
-            return this.handleWithUnit(left, right, '+')
-        }
-
-        // String concatenation
-        if (
-            left instanceof ComputedValue.StringValue &&
-            right instanceof ComputedValue.StringValue
-        ) {
-            return new ComputedValue.StringValue(left.value + right.value);
+        if (left instanceof WithUnitValue || right instanceof WithUnitValue) {
+            return this.handleWithUnit(left, right, '+');
         }
 
         if (
-            left instanceof ComputedValue.StringValue &&
-            right instanceof ComputedValue.Number
+            left instanceof StringValue &&
+            right instanceof StringValue
         ) {
-            return new ComputedValue.StringValue(left.value + right.toString());
+            return new StringValue(left.value + right.value);
         }
 
         if (
-            left instanceof ComputedValue.Number &&
-            right instanceof ComputedValue.StringValue
+            left instanceof StringValue &&
+            (right instanceof RealValue || right instanceof NaturalValue || right instanceof WithUnitValue)
         ) {
-            return new ComputedValue.StringValue(left.toString() + right.value);
+            return new StringValue(left.value + right.toString());
         }
 
-        throw new Error(`Invalid operands for '+': ${left} and ${right}`);
+        if (
+            (left instanceof RealValue || left instanceof NaturalValue || left instanceof WithUnitValue) &&
+            right instanceof StringValue
+        ) {
+            return new StringValue(left.toString() + right.value);
+        }
+
+        throw new Error(`Invalid operands for '+': ${left.toString()} and ${right.toString()}`);
     }
 
     private handleSubtraction(
@@ -293,22 +257,20 @@ export class Interpreter {
         right: ComputedValue
     ): ComputedValue {
         if (
-            (left instanceof ComputedValue.Real || left instanceof ComputedValue.Natural) &&
-            (right instanceof ComputedValue.Real || right instanceof ComputedValue.Natural)
+            (left instanceof RealValue || left instanceof NaturalValue) &&
+            (right instanceof RealValue || right instanceof NaturalValue)
         ) {
-            const leftValue = left instanceof ComputedValue.Real ? left.value : left.value;
-            const rightValue = right instanceof ComputedValue.Real ? right.value : right.value;
-            const result = leftValue - rightValue;
+            const result = left.value - right.value;
             return Number.isInteger(result)
-                ? new ComputedValue.Natural(result)
-                : new ComputedValue.Real(result);
+                ? new NaturalValue(result)
+                : new RealValue(result);
         }
 
-        if (left instanceof ComputedValue.WithUnit || right instanceof ComputedValue.WithUnit) {
-            return this.handleWithUnit(left, right, '-')
+        if (left instanceof WithUnitValue || right instanceof WithUnitValue) {
+            return this.handleWithUnit(left, right, '-');
         }
 
-        throw new Error(`Invalid operands for '-': ${left} and ${right}`);
+        throw new Error(`Invalid operands for '-': ${left.toString()} and ${right.toString()}`);
     }
 
     private handleMultiplication(
@@ -316,31 +278,28 @@ export class Interpreter {
         right: ComputedValue
     ): ComputedValue {
         if (
-            (left instanceof ComputedValue.Real || left instanceof ComputedValue.Natural) &&
-            (right instanceof ComputedValue.Real || right instanceof ComputedValue.Natural)
+            (left instanceof RealValue || left instanceof NaturalValue) &&
+            (right instanceof RealValue || right instanceof NaturalValue)
         ) {
-            const leftValue = left instanceof ComputedValue.Real ? left.value : left.value;
-            const rightValue = right instanceof ComputedValue.Real ? right.value : right.value;
-            const result = leftValue * rightValue;
+            const result = left.value * right.value;
             return Number.isInteger(result)
-                ? new ComputedValue.Natural(result)
-                : new ComputedValue.Real(result);
+                ? new NaturalValue(result)
+                : new RealValue(result);
         }
 
-        if (left instanceof ComputedValue.WithUnit || right instanceof ComputedValue.WithUnit) {
-            return this.handleWithUnit(left, right, '*')
+        if (left instanceof WithUnitValue || right instanceof WithUnitValue) {
+            return this.handleWithUnit(left, right, '*');
         }
 
-        // String multiplication
         if (
-            left instanceof ComputedValue.StringValue &&
-            (right instanceof ComputedValue.Real || right instanceof ComputedValue.Natural)
+            left instanceof StringValue &&
+            (right instanceof RealValue || right instanceof NaturalValue)
         ) {
-            const times = right instanceof ComputedValue.Real ? Math.floor(right.value) : right.value;
-            return new ComputedValue.StringValue(left.value.repeat(times));
+            const times = Math.floor(right.value);
+            return new StringValue(left.value.repeat(times));
         }
 
-        throw new Error(`Invalid operands for '*': ${left} and ${right}`);
+        throw new Error(`Invalid operands for '*': ${left.toString()} and ${right.toString()}`);
     }
 
     private handleDivision(
@@ -348,20 +307,21 @@ export class Interpreter {
         right: ComputedValue
     ): ComputedValue {
         if (
-            (left instanceof ComputedValue.Real || left instanceof ComputedValue.Natural) &&
-            (right instanceof ComputedValue.Real || right instanceof ComputedValue.Natural)
+            (left instanceof RealValue || left instanceof NaturalValue) &&
+            (right instanceof RealValue || right instanceof NaturalValue)
         ) {
-            const leftValue = left instanceof ComputedValue.Real ? left.value : left.value;
-            const rightValue = right instanceof ComputedValue.Real ? right.value : right.value;
-            const result = leftValue / rightValue;
-            return new ComputedValue.Real(result);
+            if (right.value === 0) {
+                throw new Error('Division by zero');
+            }
+            const result = left.value / right.value;
+            return new RealValue(result);
         }
 
-        if (left instanceof ComputedValue.WithUnit || right instanceof ComputedValue.WithUnit) {
-            return this.handleWithUnit(left, right, '/')
+        if (left instanceof WithUnitValue || right instanceof WithUnitValue) {
+            return this.handleWithUnit(left, right, '/');
         }
 
-        throw new Error(`Invalid operands for '/': ${left} and ${right}`);
+        throw new Error(`Invalid operands for '/': ${left.toString()} and ${right.toString()}`);
     }
 
     private handleWithUnit(
@@ -369,66 +329,50 @@ export class Interpreter {
         right: ComputedValue,
         operator: string,
     ): ComputedValue {
-        const targetUnit = left instanceof ComputedValue.WithUnit
-            ? left.unit
-            : right instanceof ComputedValue.WithUnit
-                ? right.unit
-                : null;
+        let targetUnit: string | null = null;
 
-        if (targetUnit) {
-            const leftValue = left instanceof ComputedValue.WithUnit
-                ? this.performUnitConversion(left.value, left.unit, targetUnit)
-                : (left instanceof ComputedValue.Number.Real || left instanceof ComputedValue.Number.Natural
-                    ? left.value
-                    : null);
-
-            const rightValue = right instanceof ComputedValue.WithUnit
-                ? this.performUnitConversion(right.value, right.unit, targetUnit)
-                : (right instanceof ComputedValue.Number.Real || right instanceof ComputedValue.Number.Natural
-                    ? right.value
-                    : null);
-
-            if (leftValue !== null && rightValue !== null) {
-                switch (operator) {
-                    case '+':
-                        return new ComputedValue.WithUnit(leftValue + rightValue, targetUnit);
-                    case '-':
-                        return new ComputedValue.WithUnit(leftValue - rightValue, targetUnit);
-                    case '*':
-                        return new ComputedValue.WithUnit(leftValue * rightValue, targetUnit);
-                    case '/':
-                        return new ComputedValue.WithUnit(leftValue / rightValue, targetUnit);
-                }
-            }
+        if (left instanceof WithUnitValue) {
+            targetUnit = left.unit;
+        } else if (right instanceof WithUnitValue) {
+            targetUnit = right.unit;
         }
-        throw new Error(`Invalid operands for '/': ${left} and ${right}`);
-    }
 
-    private getUnit(node: ASTNode): string | null {
-        if (node instanceof ASTNode.WithUnit) {
-            return node.unit;
-        } else if (node instanceof ASTNode.BinaryOperation) {
-            const leftUnit = this.getUnit(node.left);
-            const rightUnit = this.getUnit(node.right);
-            return leftUnit || rightUnit;
+        if (!targetUnit) {
+            throw new Error(`Cannot determine target unit for operator '${operator}'`);
+        }
+
+        let leftValue: number;
+        if (left instanceof WithUnitValue) {
+            leftValue = UnitConverter.convert(left.value, left.unit, targetUnit);
+        } else if (left instanceof RealValue || left instanceof NaturalValue) {
+            leftValue = left.value;
         } else {
-            return null;
+            throw new Error(`Left operand cannot be converted to unit '${targetUnit}'`);
         }
-    }
 
-    private performUnitConversion(
-        value: number,
-        sourceUnit: string,
-        targetUnit: string
-    ): number {
-        const sourceFactor = this.unitConversion[sourceUnit];
-        const targetFactor = this.unitConversion[targetUnit];
-        if (sourceFactor === undefined) {
-            throw new Error(`Unknown unit: ${sourceUnit}`);
+        let rightValue: number;
+        if (right instanceof WithUnitValue) {
+            rightValue = UnitConverter.convert(right.value, right.unit, targetUnit);
+        } else if (right instanceof RealValue || right instanceof NaturalValue) {
+            rightValue = right.value;
+        } else {
+            throw new Error(`Right operand cannot be converted to unit '${targetUnit}'`);
         }
-        if (targetFactor === undefined) {
-            throw new Error(`Unknown unit: ${targetUnit}`);
+
+        switch (operator) {
+            case '+':
+                return new WithUnitValue(leftValue + rightValue, targetUnit);
+            case '-':
+                return new WithUnitValue(leftValue - rightValue, targetUnit);
+            case '*':
+                return new WithUnitValue(leftValue * rightValue, targetUnit);
+            case '/':
+                if (rightValue === 0) {
+                    throw new Error('Division by zero');
+                }
+                return new WithUnitValue(leftValue / rightValue, targetUnit);
+            default:
+                throw new Error(`Unknown operator: ${operator}`);
         }
-        return (value * sourceFactor) / targetFactor;
     }
 }

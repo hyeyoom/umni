@@ -1,8 +1,8 @@
 // Main.ts
 
-import { Lexer } from './Lexer';
-import { Parser } from './Parser';
-import { Interpreter } from './Interpreter';
+import {Lexer} from './Lexer';
+import {Parser} from './Parser';
+import {Interpreter} from './Interpreter';
 import {Environment} from "@/lib/Environment";
 
 async function main() {

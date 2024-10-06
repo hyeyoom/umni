@@ -1,20 +1,50 @@
 // Parser.ts
+import {
+    AssignToken,
+    CommaToken,
+    FunctionDeclarationToken,
+    IdentifierToken,
+    LeftParenToken,
+    NaturalToken,
+    RealToken,
+    RightParenToken,
+    SemanticOperatorSymbol,
+    SemanticOperatorToken,
+    StringLiteralToken,
+    SymbolicOperatorToken,
+    Token,
+    UnitToken,
+    WithUnitToken
+} from './tokens';
+import {
+    AssignmentNode,
+    ASTNode,
+    BinaryOperationNode,
+    FunctionCallNode,
+    FunctionDeclarationNode,
+    NaturalNode,
+    RealNode,
+    StringLiteralNode,
+    UnaryOperationNode,
+    UnitConversionNode,
+    VariableNode,
+    WithUnitNode
+} from './ASTNode';
 
-import {Token} from './Token';
-import {ASTNode} from './ASTNode';
+// Define a type for the Token constructor without using 'any'
+type TokenConstructor<T extends Token> = new (...args: unknown[]) => T;
 
 export class Parser {
     private position = 0;
 
-    constructor(private tokens: Token[]) {
-    }
+    constructor(private tokens: Token[]) {}
 
     parse(): ASTNode {
         return this.parseStatement();
     }
 
     private parseStatement(): ASTNode {
-        if (this.currentToken() instanceof Token.FunctionDeclaration) {
+        if (this.currentToken() instanceof FunctionDeclarationToken) {
             return this.parseFunctionDeclaration();
         } else {
             return this.parseAssignment();
@@ -23,9 +53,9 @@ export class Parser {
 
     private parseAssignment(): ASTNode {
         const left = this.parseExpression();
-        if (this.match(Token.Assign)) {
+        if (this.match(AssignToken)) {
             const value = this.parseAssignment();
-            return new ASTNode.Assignment(left, value);
+            return new AssignmentNode(left, value);
         } else {
             return left;
         }
@@ -36,11 +66,11 @@ export class Parser {
     }
 
     private parseComparison(): ASTNode {
-        let node = this.parseToConversion()
+        let node = this.parseToConversion();
         while (true) {
-            const token = this.currentToken()
+            const token = this.currentToken();
             if (
-                token instanceof Token.SymbolicOperator &&
+                token instanceof SymbolicOperatorToken &&
                 (
                     token.symbol === '>' ||
                     token.symbol === '>=' ||
@@ -51,13 +81,13 @@ export class Parser {
                 )
             ) {
                 this.consume();
-                const right = this.parseAddition()
-                node = new ASTNode.BinaryOperation(node, token.symbol, right);
+                const right = this.parseAddition();
+                node = new BinaryOperationNode(node, token.symbol, right);
             } else {
                 break;
             }
         }
-        return node
+        return node;
     }
 
     private parseToConversion(): ASTNode {
@@ -65,15 +95,15 @@ export class Parser {
         while (true) {
             const token = this.currentToken();
             if (
-                token instanceof Token.SemanticOperator &&
-                token.symbol === Token.SemanticOperator.Symbol.TO
+                token instanceof SemanticOperatorToken &&
+                token.symbol === SemanticOperatorSymbol.TO
             ) {
-                this.consume(); // 'to' token
+                this.consume();
                 const targetUnitToken = this.consume();
-                if (targetUnitToken instanceof Token.Unit) {
-                    node = new ASTNode.UnitConversion(node, targetUnitToken.name);
+                if (targetUnitToken instanceof UnitToken) {
+                    node = new UnitConversionNode(node, targetUnitToken.name);
                 } else {
-                    throw new Error(`Expected unit identifier after 'to': ${targetUnitToken}`);
+                    throw new Error(`Expected unit identifier after 'to', but found: ${targetUnitToken.constructor.name}`);
                 }
             } else {
                 break;
@@ -87,12 +117,12 @@ export class Parser {
         while (true) {
             const token = this.currentToken();
             if (
-                token instanceof Token.SymbolicOperator &&
+                token instanceof SymbolicOperatorToken &&
                 (token.symbol === '+' || token.symbol === '-')
             ) {
                 this.consume();
                 const right = this.parseMultiplication();
-                node = new ASTNode.BinaryOperation(node, token.symbol, right);
+                node = new BinaryOperationNode(node, token.symbol, right);
             } else {
                 break;
             }
@@ -105,19 +135,19 @@ export class Parser {
         while (true) {
             const token = this.currentToken();
             if (
-                token instanceof Token.SymbolicOperator &&
+                token instanceof SymbolicOperatorToken &&
                 (token.symbol === '*' || token.symbol === '/')
             ) {
                 this.consume();
                 const right = this.parseUnary();
-                node = new ASTNode.BinaryOperation(node, token.symbol, right);
+                node = new BinaryOperationNode(node, token.symbol, right);
             } else if (
-                token instanceof Token.SemanticOperator &&
-                token.symbol === Token.SemanticOperator.Symbol.TIMES
+                token instanceof SemanticOperatorToken &&
+                token.symbol === SemanticOperatorSymbol.TIMES
             ) {
                 this.consume();
                 const right = this.parseUnary();
-                node = new ASTNode.BinaryOperation(node, '*', right);
+                node = new BinaryOperationNode(node, '*', right);
             } else {
                 break;
             }
@@ -127,14 +157,14 @@ export class Parser {
 
     private parseUnary(): ASTNode {
         const token = this.currentToken();
-        if (token instanceof Token.SymbolicOperator && token.symbol === '-') {
+        if (token instanceof SymbolicOperatorToken && token.symbol === '-') {
             this.consume();
             const operand = this.parseUnary();
-            return new ASTNode.UnaryOperation('-', operand);
-        } else if (token instanceof Token.SymbolicOperator && token.symbol === '!') {
-            this.consume()
+            return new UnaryOperationNode('-', operand);
+        } else if (token instanceof SymbolicOperatorToken && token.symbol === '!') {
+            this.consume();
             const operand = this.parseUnary();
-            return new ASTNode.UnaryOperation('!', operand)
+            return new UnaryOperationNode('!', operand);
         } else {
             return this.parsePrimary();
         }
@@ -142,91 +172,90 @@ export class Parser {
 
     private parsePrimary(): ASTNode {
         const token = this.currentToken();
-        if (token instanceof Token.Real) {
+        if (token instanceof RealToken) {
             this.consume();
-            return new ASTNode.Real(token.value);
-        } else if (token instanceof Token.Natural) {
+            return new RealNode(token.value);
+        } else if (token instanceof NaturalToken) {
             this.consume();
-            return new ASTNode.Natural(token.value);
-        } else if (token instanceof Token.WithUnit) {
+            return new NaturalNode(token.value);
+        } else if (token instanceof WithUnitToken) {
             this.consume();
-            return new ASTNode.WithUnit(token.value, token.unit);
-        } else if (token instanceof Token.StringLiteral) {
+            return new WithUnitNode(token.value, token.unit);
+        } else if (token instanceof StringLiteralToken) {
             this.consume();
-            return new ASTNode.StringLiteral(token.value);
-        } else if (token instanceof Token.Identifier) {
+            return new StringLiteralNode(token.value);
+        } else if (token instanceof IdentifierToken) {
             const nextToken = this.peekToken();
-            if (nextToken instanceof Token.LeftParen) {
+            if (nextToken instanceof LeftParenToken) {
                 return this.parseFunctionCall();
             } else {
                 this.consume();
-                return new ASTNode.Variable(token.name);
+                return new VariableNode(token.name);
             }
-        } else if (token instanceof Token.LeftParen) {
+        } else if (token instanceof LeftParenToken) {
             this.consume();
             const expression = this.parseExpression();
-            this.expect(Token.RightParen);
+            this.expect(RightParenToken);
             return expression;
         } else {
-            throw new Error(`Unexpected token: ${token}`);
+            throw new Error(`Unexpected token: ${token.constructor.name}`);
         }
     }
 
-    private parseFunctionDeclaration(): ASTNode {
-        this.consume(); // Consume 'fn'
+    private parseFunctionDeclaration(): FunctionDeclarationNode {
+        this.consume(); // Consume 'fn' token
         const nameToken = this.consume();
-        if (!(nameToken instanceof Token.Identifier)) {
-            throw new Error('Expected function name after "fn"');
+        if (!(nameToken instanceof IdentifierToken)) {
+            throw new Error(`Function declaration expects an identifier for the function name, but found: ${nameToken.constructor.name}`);
         }
         const name = nameToken.name;
 
-        this.consume(); // Consume '('
+        this.expect(LeftParenToken);
         const parameters: string[] = [];
-        if (!(this.currentToken() instanceof Token.RightParen)) {
+        if (!(this.currentToken() instanceof RightParenToken)) {
             do {
                 const paramToken = this.consume();
-                if (!(paramToken instanceof Token.Identifier)) {
-                    throw new Error('Expected parameter name');
+                if (!(paramToken instanceof IdentifierToken)) {
+                    throw new Error(`Function parameters must be identifiers, but found: ${paramToken.constructor.name}`);
                 }
                 parameters.push(paramToken.name);
-            } while (this.match(Token.Comma));
+            } while (this.match(CommaToken));
         }
-        this.expect(Token.RightParen);
-        this.expect(Token.Assign);
+        this.expect(RightParenToken);
+        this.expect(AssignToken);
         const body = this.parseExpression();
-        return new ASTNode.FunctionDeclaration(name, parameters, body);
+        return new FunctionDeclarationNode(name, parameters, body);
     }
 
-    private parseFunctionCall(): ASTNode {
+    private parseFunctionCall(): FunctionCallNode {
         const nameToken = this.consume();
-        if (!(nameToken instanceof Token.Identifier)) {
-            throw new Error('Expected function name');
+        if (!(nameToken instanceof IdentifierToken)) {
+            throw new Error(`Expected function name, but found: ${nameToken.constructor.name}`);
         }
         const name = nameToken.name;
 
-        this.consume(); // Consume '('
+        this.expect(LeftParenToken);
         const args: ASTNode[] = [];
-        if (!(this.currentToken() instanceof Token.RightParen)) {
+        if (!(this.currentToken() instanceof RightParenToken)) {
             do {
                 args.push(this.parseExpression());
-            } while (this.match(Token.Comma));
+            } while (this.match(CommaToken));
         }
-        this.expect(Token.RightParen);
-        return new ASTNode.FunctionCall(name, args);
+        this.expect(RightParenToken);
+        return new FunctionCallNode(name, args);
     }
 
-    private expect(expectedType: new (...args: never[]) => Token) {
+    private expect<T extends Token>(expectedType: TokenConstructor<T>): T {
         const token = this.currentToken();
         if (token instanceof expectedType) {
             this.consume();
+            return token;
         } else {
-            throw new Error(
-                `Expected token ${expectedType.name} but found ${token}`
-            );
+            throw new Error(`Expected token ${expectedType.name} but found ${token.constructor.name}`);
         }
     }
 
-    private match(expectedType: new (...args: never[]) => Token): boolean {
+    private match<T extends Token>(expectedType: TokenConstructor<T>): boolean {
         const token = this.currentToken();
         if (token instanceof expectedType) {
             this.consume();
