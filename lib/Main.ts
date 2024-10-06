@@ -9,7 +9,6 @@ async function main() {
     const environment = new Environment();
     const interpreter = new Interpreter(environment);
 
-    console.log('Welcome to the Numi-like Interpreter REPL!');
     while (true) {
         const input = await readInput('> ');
         if (!input.trim()) continue;
