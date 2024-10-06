@@ -2,7 +2,7 @@
 
 body {
     margin: 0;
-    font-family: Arial, sans-serif;
+    font-family: 'Courier New', Consolas, monospace;
     background-color: #1f1f1f;
     color: #ffffff;
     font-size: 1.5rem;
@@ -26,6 +26,7 @@ body {
     border: none;
     color: #BEBEBE;
     width: 70%;
+    font-family: 'Courier New', Consolas, monospace;
     font-weight: 700;
     font-size: 1.5rem;
     outline: none;
