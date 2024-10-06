@@ -106,6 +106,34 @@ export class Environment {
                     }
                 },
             ],
+            [
+                'type',
+                (args: ComputedValue[]) => {
+                    if (args.length !== 1) {
+                        throw new Error('type function requires one argument');
+                    }
+                    const arg = args[0];
+                    if (arg instanceof ComputedValue.StringValue) {
+                        return new ComputedValue.StringValue("string");
+                    }
+
+                    if (arg instanceof ComputedValue.LogicalValue) {
+                        return new ComputedValue.StringValue("boolean");
+                    }
+
+                    if (arg instanceof ComputedValue.Real) {
+                        return new ComputedValue.StringValue("double");
+                    }
+
+                    if (arg instanceof ComputedValue.Natural) {
+                        return new ComputedValue.StringValue("integer");
+                    }
+
+                    if (arg instanceof ComputedValue.WithUnit) {
+                        return new ComputedValue.StringValue("double with unit");
+                    }
+                },
+            ],
         ]);
     }
 }
