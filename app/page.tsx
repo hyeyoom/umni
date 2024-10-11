@@ -19,7 +19,7 @@ export default function Home() {
 
     const handleInputChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
         const newLines = [...lines];
-        newLines[index].expression = e.target.value;
+        newLines[index].expression = e.target.value.replace("“", "\"").replaceAll("”", "\"");
 
         if (debounceTimeout) {
             clearTimeout(debounceTimeout);
