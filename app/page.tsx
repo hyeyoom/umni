@@ -47,7 +47,10 @@ export default function Home() {
                     const ast = parser.parse();
                     const evaluatedResult = interpreterRef.current.interpret(ast);
                     newLines[i].result = evaluatedResult.toString();
-                } catch (error) {
+                } catch (error: unknown) {
+                    if (error instanceof Error) {
+                        // do nothing
+                    }
                     newLines[i].result = "";
                 }
             });
