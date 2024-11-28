@@ -321,3 +321,65 @@ body {
     }
 }
 
+.autocomplete-container {
+    position: absolute;
+    background: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    width: 300px;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.autocomplete-item {
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.autocomplete-item:hover {
+    background-color: #3a3a3a;
+}
+
+.type-indicator {
+    font-size: 0.8rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.type-indicator.keyword {
+    background-color: #ff6b6b;
+    color: #1f1f1f;
+}
+
+.type-indicator.function {
+    background-color: #4ecdc4;
+    color: #1f1f1f;
+}
+
+.type-indicator.unit {
+    background-color: #8EFF1E;
+    color: #1f1f1f;
+}
+
+.type-indicator.variable {
+    background-color: #a78bfa;
+    color: #1f1f1f;
+}
+
+.suggestion-text {
+    color: #ffffff;
+}
+
+.suggestion-description {
+    color: #888888;
+    font-size: 0.9rem;
+    margin-left: auto;
+}
+
