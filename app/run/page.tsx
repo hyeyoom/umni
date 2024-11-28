@@ -10,8 +10,7 @@ import '../globals.css'
 import AutoComplete from '../components/AutoComplete';
 import {Suggestion} from '../types/suggestion';
 
-// 자동완성 항목들
-const SUGGESTIONS: Suggestion[] = [
+const STATIC_SUGGESTIONS: Suggestion[] = [
     {text: 'fn', type: 'keyword', description: '함수 선언'},
     {text: 'to', type: 'keyword', description: '단위 변환'},
     {text: 'times', type: 'keyword', description: '반복'},
@@ -22,9 +21,6 @@ const SUGGESTIONS: Suggestion[] = [
     {text: 'kb', type: 'unit', description: '킬로바이트'},
     {text: 'mb', type: 'unit', description: '메가바이트'},
     {text: 'gb', type: 'unit', description: '기가바이트'},
-    {text: 'b64Encode', type: 'function', description: 'Base64 ��코딩'},
-    {text: 'b64Decode', type: 'function', description: 'Base64 디코딩'},
-    {text: 'type', type: 'function', description: '타입 확인'},
 ];
 
 export default function UmniRun() {
@@ -38,6 +34,7 @@ export default function UmniRun() {
     const [autoCompletePosition, setAutoCompletePosition] = useState({top: 0, left: 0});
     const [filteredSuggestions, setFilteredSuggestions] = useState<Suggestion[]>([]);
     const [selectedIndex, setSelectedIndex] = useState<number>(0);
+    const [currentWord, setCurrentWord] = useState<string>("");
 
     useEffect(() => {
         setIsClient(true);
@@ -53,6 +50,41 @@ export default function UmniRun() {
         }
     }, [lines, isClient]);
 
+    // 현재 환경의 변수와 함수를 포함한 전체 제안 목록 생성
+    const getAllSuggestions = (): Suggestion[] => {
+        const suggestions = [...STATIC_SUGGESTIONS];
+
+        // 변수 추가
+        environmentRef.current.variables.forEach((value, name) => {
+            suggestions.push({
+                text: name,
+                type: 'variable',
+                description: `변수 (${value.toString()})`
+            });
+        });
+
+        // 사용자 정의 함수 추가
+        environmentRef.current.functions.forEach((func, name) => {
+            const params = func.parameters.join(', ');
+            suggestions.push({
+                text: name,
+                type: 'function',
+                description: `함수 (${params})`
+            });
+        });
+
+        // 내장 함수 추가
+        environmentRef.current.builtInFunctions.forEach((_, name) => {
+            suggestions.push({
+                text: name,
+                type: 'function',
+                description: '내장 함수'
+            });
+        });
+
+        return suggestions;
+    };
+
     const handleInputChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
         const newLines = [...lines];
         const value = e.target.value.replace(/"/g, "\"").replace(/"/g, "\"");
@@ -62,7 +94,7 @@ export default function UmniRun() {
         const cursorPosition = e.target.selectionStart || 0;
         const textBeforeCursor = value.slice(0, cursorPosition);
 
-        // 숫자 뒤에 오는 단위도 감지하도록 정규식 수정
+        // 숫자 뒤에 오는 단어도 감지하도록 정규식 수정
         const match = textBeforeCursor.match(/[a-zA-Z0-9_가-힣]+$/);
         const currentWord = match ? match[0] : '';
 
@@ -70,27 +102,25 @@ export default function UmniRun() {
         if (currentWord.length > 0) {
             let filtered;
             if (/^\d+$/.test(currentWord)) {
-                filtered = SUGGESTIONS.filter(s => s.type === 'unit');
+                filtered = getAllSuggestions().filter(s => s.type === 'unit');
             } else if (/^\d+[a-zA-Z]+$/.test(currentWord)) {
-                // 숫자+문자인 경우 (예: "10k"), 단위만 필터링하고 문자 부분으로 매칭
                 const unitPart = currentWord.match(/[a-zA-Z]+$/)?.[0] || '';
-                filtered = SUGGESTIONS.filter(s =>
+                filtered = getAllSuggestions().filter(s =>
                     s.type === 'unit' && s.text.toLowerCase().startsWith(unitPart.toLowerCase())
                 );
             } else {
-                // 일반적인 경우
-                filtered = SUGGESTIONS.filter(s =>
+                filtered = getAllSuggestions().filter(s =>
                     s.text.toLowerCase().startsWith(currentWord.toLowerCase())
                 );
             }
 
             setFilteredSuggestions(filtered);
+            setCurrentWord(currentWord);
 
             if (filtered.length > 0) {
-                setSelectedIndex(0);
                 const rect = e.target.getBoundingClientRect();
                 const wordStart = textBeforeCursor.length - currentWord.length;
-                const charWidth = 9.6; // 예상 문자 너비
+                const charWidth = 9.6;
                 setAutoCompletePosition({
                     top: rect.bottom + window.scrollY + 5,
                     left: rect.left + wordStart * charWidth
