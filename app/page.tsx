@@ -1,98 +1,151 @@
-// app/page.tsx
 "use client";
 
-import React, {useRef, useState, useEffect} from "react";
+import React, {useEffect, useRef, useState} from "react";
+import Link from "next/link";
 import {Environment} from "@/lib/Environment";
 import {Interpreter} from "@/lib/Interpreter";
 import {Lexer} from "@/lib/Lexer";
 import {Parser} from "@/lib/Parser";
-import './globals.css';
+import './globals.css'
+
+const DEMO_EXPRESSIONS = [
+    [
+        {expression: "fn 원의넓이(r) = pi * r * r", delay: 50},
+        {expression: "r = 3", delay: 50},
+        {expression: "원의넓이(3)", delay: 50},
+    ],
+    [
+        {expression: "origin = 'Hello Umni'", delay: 50},
+        {expression: "e = b64Encode(origin)", delay: 50},
+        {expression: "d = b64Decode(e)", delay: 50},
+        {expression: "type(origin)", delay: 50},
+    ],
+    [
+        {expression: "x = 5km", delay: 50},
+        {expression: "y = 3km", delay: 50},
+        {expression: "x + y to m", delay: 60}
+    ],
+    [
+        {expression: "width = 1920", delay: 50},
+        {expression: "height = 1080", delay: 50},
+        {expression: "width / 16", delay: 60}
+    ]
+];
 
 export default function Home() {
-    const [lines, setLines] = useState<{ expression: string; result: string }[]>([{ expression: "", result: "" }]);
-    const [isClient, setIsClient] = useState(false);
-    const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+    const [displayLines, setDisplayLines] = useState<{ expression: string; result: string }[]>([]);
+    const [currentLine, setCurrentLine] = useState(0);
+    const [cursorPosition, setCursorPosition] = useState(0);
+    const [isFading, setIsFading] = useState(false);
     const environmentRef = useRef(new Environment());
     const interpreterRef = useRef(new Interpreter(environmentRef.current));
-    const [debounceTimeout, setDebounceTimeout] = useState<number | undefined>(undefined);
+    const demoSetIndexRef = useRef(0);
+    const timeoutRef = useRef<NodeJS.Timeout>();
 
     useEffect(() => {
-        setIsClient(true);
-        const savedLines = localStorage.getItem("lines");
-        if (savedLines) {
-            setLines(JSON.parse(savedLines));
-        }
-    }, []);
+        const typeNextCharacter = () => {
+            const currentSet = DEMO_EXPRESSIONS[demoSetIndexRef.current];
+            const currentExpression = currentSet[currentLine];
 
-    useEffect(() => {
-        if (isClient) {
-            localStorage.setItem("lines", JSON.stringify(lines));
-        }
-    }, [lines, isClient]);
+            if (!currentExpression) return;
 
-    const handleInputChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
-        const newLines = [...lines];
-        newLines[index].expression = e.target.value.replace("“", "\"").replaceAll("”", "\"");
-
-        if (debounceTimeout) {
-            clearTimeout(debounceTimeout);
-        }
-        const timeout = window.setTimeout(() => {
-            newLines.forEach((line, i) => {
+            if (cursorPosition < currentExpression.expression.length) {
+                setDisplayLines(prev => {
+                    const newLines = [...prev];
+                    if (!newLines[currentLine]) {
+                        newLines[currentLine] = {expression: "", result: ""};
+                    }
+                    newLines[currentLine].expression =
+                        currentExpression.expression.substring(0, cursorPosition + 1);
+                    return newLines;
+                });
+                setCursorPosition(prev => prev + 1);
+                timeoutRef.current = setTimeout(typeNextCharacter, currentExpression.delay);
+            } else {
+                // 현재 줄의 결과 계산
                 try {
-                    const expr = line.expression;
-                    const lexer = new Lexer(expr);
+                    const lexer = new Lexer(currentExpression.expression);
                     const tokens = lexer.tokenize();
                     const parser = new Parser(tokens);
                     const ast = parser.parse();
-                    const evaluatedResult = interpreterRef.current.interpret(ast);
-                    newLines[i].result = evaluatedResult.toString();
-                } catch (error: unknown) {
-                    if (error instanceof Error) {
-                        // do nothing
-                    }
-                    newLines[i].result = "";
+                    const result = interpreterRef.current.interpret(ast);
+                    setDisplayLines(prev => {
+                        const newLines = [...prev];
+                        newLines[currentLine].result = result.toString();
+                        return newLines;
+                    });
+                } catch (error) {
+                    console.error(error);
                 }
-            });
-            setLines(newLines);
-        }, 300);
 
-        setDebounceTimeout(timeout);
-    };
+                // 다음 줄로 이동 또는 다음 세트로 전환
+                if (currentLine < currentSet.length - 1) {
+                    setCurrentLine(prev => prev + 1);
+                    setCursorPosition(0);
+                    timeoutRef.current = setTimeout(typeNextCharacter, 500);
+                } else {
+                    timeoutRef.current = setTimeout(() => {
+                        setIsFading(true);
+                        setTimeout(() => {
+                            setDisplayLines([]);
+                            setCurrentLine(0);
+                            setCursorPosition(0);
+                            setIsFading(false);
+                            demoSetIndexRef.current = (demoSetIndexRef.current + 1) % DEMO_EXPRESSIONS.length;
+                            timeoutRef.current = setTimeout(typeNextCharacter, 500);
+                        }, 300);
+                    }, 2000);
+                }
+            }
+        };
 
-    const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            const newLines = [...lines, { expression: "", result: "" }];
-            setLines(newLines);
+        timeoutRef.current = setTimeout(typeNextCharacter, 500);
 
-            setTimeout(() => {
-                inputRefs.current[index + 1]?.focus();
-            }, 0);
-        }
-    };
-
-    const handleResultClick = (result: string) => {
-        navigator.clipboard.writeText(result);
-    };
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+    }, [currentLine, cursorPosition]);
 
     return (
-        <div className="container">
-            {lines.map((line, index) => (
-                <div className="row" key={index}>
-                    <input
-                        className="input-box"
-                        value={line.expression}
-                        onChange={(e) => handleInputChange(index, e)}
-                        onKeyDown={(e) => handleKeyPress(e, index)}
-                        autoFocus={index === lines.length - 1}
-                        placeholder={"Empty Line"}
-                    />
-                    <span className="result" onClick={() => handleResultClick(line.result)}>
-                        {line.result}
-                    </span>
+        <main className="landing-page">
+            <div className="hero-section">
+                <h1 className="title">U M N I</h1>
+                <p className="subtitle">Smartest Programmable Calculator</p>
+            </div>
+
+            <div className="demo-section">
+                <div className={`calculator-preview ${isFading ? 'fade-out' : 'fade-in'}`}>
+                    {displayLines.map((line, index) => (
+                        <div className="row" key={index}>
+                            <div className="input-container">
+                                <input
+                                    className="input-box"
+                                    value={line.expression}
+                                    readOnly
+                                    placeholder="Empty Line"
+                                />
+                                {index === currentLine && (
+                                    <div
+                                        className="cursor"
+                                        style={{
+                                            left: `${cursorPosition * 0.61}em`
+                                        }}
+                                    />
+                                )}
+                            </div>
+                            <span className="result">
+                {line.result}
+              </span>
+                        </div>
+                    ))}
                 </div>
-            ))}
-        </div>
+            </div>
+
+            <Link href="/run" className="start-button">
+                시작하기
+            </Link>
+        </main>
     );
 }
