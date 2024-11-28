@@ -1,5 +1,6 @@
 /* app/globals.css */
 
+/* 기본 스타일 */
 body {
     margin: 0;
     font-family: 'Courier New', Consolas, monospace;
@@ -11,7 +12,11 @@ body {
 .container {
     display: flex;
     flex-direction: column;
-    padding: 5rem 25rem;
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    min-height: 100vh;
+    box-sizing: border-box;
 }
 
 .row {
@@ -19,233 +24,300 @@ body {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 10px;
+    gap: 1rem;
 }
 
 .input-box {
     background: transparent;
     border: none;
     color: #BEBEBE;
-    width: 70%;
-    font-family: 'Courier New', Consolas, monospace;
-    font-weight: 700;
+    width: 100%;
+    font-family: var(--font-geist-mono);
+    font-weight: 500;
     font-size: 1.5rem;
     outline: none;
-}
-
-.input-box:focus {
-    outline: none;
+    padding: 0.5rem;
 }
 
 .result {
     color: #8EFF1E;
     cursor: pointer;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    transition: all 0.2s ease;
     font-size: 1.5rem;
     text-align: right;
     white-space: nowrap;
-    padding: 0.5rem;
+    padding: 0.5rem 1rem;
     border-radius: 8px;
-    font-weight: 600;
-    box-sizing: border-box;
+    font-weight: 500;
+    min-width: 80px;
+    user-select: none;
 }
 
 .result:hover {
     background-color: #8EFF1E;
-    color: #3F3F3F;
+    color: #1f1f1f;
 }
 
-@media (max-width: 1024px) {
+.result:active {
+    transform: scale(0.98);
+}
+
+/* 데스크톱 앱 스타일 */
+@media (display-mode: window) {
     .container {
-        padding: 5rem 2rem;
+        padding: 1rem;
+    }
+
+    .input-box, .result {
+        font-size: 1.3rem;
+    }
+
+    /* 스크롤바 스타일링 */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #2a2a2a;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: #8EFF1E;
+        border-radius: 4px;
     }
 }
 
-@media (max-width: 768px) {
-    body {
-        font-size: 1.2rem;
-    }
-
+/* 태블릿 대응 */
+@media (max-width: 1024px) {
     .container {
         padding: 2rem;
     }
 
+    body {
+        font-size: 1.3rem;
+    }
+
+    .input-box, .result {
+        font-size: 1.3rem;
+    }
+}
+
+/* 모바일 대응 */
+@media (max-width: 768px) {
+    body {
+        font-size: 1rem;
+    }
+
+    .container {
+        padding: 1rem;
+    }
+
+    .row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+
     .input-box {
+        font-size: 1rem;
         width: 100%;
-        font-size: 1.2rem;
+        padding: 0.5rem 0;
     }
 
     .result {
-        font-size: 1.2rem;
-        padding: 0.2rem;
+        font-size: 1rem;
+        width: 100%;
+        text-align: left;
+        padding: 0.5rem;
+    }
+}
+
+/* 작은 모바일 화면 대응 */
+@media (max-width: 320px) {
+    .container {
+        padding: 0.5rem;
+    }
+
+    .input-box, .result {
+        font-size: 0.9rem;
+    }
+}
+
+/* 다크 모드 대응 */
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: #1f1f1f;
+        color: #ffffff;
     }
 }
 
 .landing-page {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  background-color: #1f1f1f;
-  background-image: 
-    radial-gradient(circle at 10% 20%, rgba(142, 255, 30, 0.05) 0%, transparent 20%),
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background-color: #1f1f1f;
+    background-image: radial-gradient(circle at 10% 20%, rgba(142, 255, 30, 0.05) 0%, transparent 20%),
     radial-gradient(circle at 90% 80%, rgba(142, 255, 30, 0.05) 0%, transparent 20%);
 }
 
 .hero-section {
-  text-align: center;
-  margin-bottom: 4rem;
+    text-align: center;
+    margin-bottom: 4rem;
 }
 
 .title {
-  font-size: 4rem;
-  color: #8EFF1E;
-  margin-bottom: 1rem;
-  text-shadow: 0 0 20px rgba(142, 255, 30, 0.3);
-  animation: glow 2s ease-in-out infinite alternate;
+    font-size: 4rem;
+    color: #8EFF1E;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 20px rgba(142, 255, 30, 0.3);
+    animation: glow 2s ease-in-out infinite alternate;
 }
 
 .subtitle {
-  font-size: 1.5rem;
-  color: #BEBEBE;
-  opacity: 0.9;
+    font-size: 1.5rem;
+    color: #BEBEBE;
+    opacity: 0.9;
 }
 
 @keyframes glow {
-  from {
-    text-shadow: 0 0 10px rgba(142, 255, 30, 0.3);
-  }
-  to {
-    text-shadow: 0 0 20px rgba(142, 255, 30, 0.5);
-  }
+    from {
+        text-shadow: 0 0 10px rgba(142, 255, 30, 0.3);
+    }
+    to {
+        text-shadow: 0 0 20px rgba(142, 255, 30, 0.5);
+    }
 }
 
 .demo-section {
-  width: 100%;
-  max-width: 800px;
-  margin-bottom: 4rem;
+    width: 100%;
+    max-width: 800px;
+    margin-bottom: 4rem;
 }
 
 .calculator-preview {
-  background-color: #2a2a2a;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s ease;
-  min-height: 200px;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+    background-color: #2a2a2a;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
 .fade-out {
-  opacity: 0.3;
-  transform: translateY(10px);
+    opacity: 0.3;
+    transform: translateY(10px);
 }
 
 .fade-in {
-  opacity: 1;
-  transform: translateY(0);
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .input-container {
-  position: relative;
-  display: flex;
-  align-items: center;
-  width: 70%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 70%;
 }
 
 .cursor {
-  position: absolute;
-  width: 2px;
-  height: 1.5em;
-  background-color: #8EFF1E;
-  animation: blink 1s step-end infinite;
-  transition: left 0.05s ease;
+    position: absolute;
+    width: 2px;
+    height: 1.5em;
+    background-color: #8EFF1E;
+    animation: blink 1s step-end infinite;
+    transition: left 0.05s ease;
 }
 
 @keyframes blink {
-  from, to {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0;
-  }
+    from, to {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
+    }
 }
 
 .features {
-  display: flex;
-  gap: 2rem;
-  margin-top: 3rem;
+    display: flex;
+    gap: 2rem;
+    margin-top: 3rem;
 }
 
 .feature {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .feature-icon {
-  font-size: 2rem;
-  background: rgba(142, 255, 30, 0.1);
-  padding: 1rem;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    font-size: 2rem;
+    background: rgba(142, 255, 30, 0.1);
+    padding: 1rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .feature-text {
-  color: #BEBEBE;
-  font-size: 1rem;
+    color: #BEBEBE;
+    font-size: 1rem;
 }
 
 .start-button {
-  display: inline-block;
-  background-color: #8EFF1E;
-  color: #1f1f1f;
-  padding: 1rem 2.5rem;
-  border-radius: 8px;
-  font-size: 1.2rem;
-  font-weight: 600;
-  text-decoration: none;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(142, 255, 30, 0.3);
+    display: inline-block;
+    background-color: #8EFF1E;
+    color: #1f1f1f;
+    padding: 1rem 2.5rem;
+    border-radius: 8px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(142, 255, 30, 0.3);
 }
 
 .start-button:hover {
-  background-color: #7de31a;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(142, 255, 30, 0.4);
+    background-color: #7de31a;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(142, 255, 30, 0.4);
 }
 
 @media (max-width: 768px) {
-  .title {
-    font-size: 2.5rem;
-  }
+    .title {
+        font-size: 2.5rem;
+    }
 
-  .subtitle {
-    font-size: 1.2rem;
-  }
+    .subtitle {
+        font-size: 1.2rem;
+    }
 
-  .demo-section {
-    padding: 1rem;
-  }
+    .demo-section {
+        padding: 1rem;
+    }
 
-  .features {
-    flex-direction: column;
-    gap: 1.5rem;
-  }
+    .features {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
 
-  .feature {
-    flex-direction: row;
-    gap: 1rem;
-  }
+    .feature {
+        flex-direction: row;
+        gap: 1rem;
+    }
 
-  .feature-icon {
-    font-size: 1.5rem;
-    padding: 0.7rem;
-  }
+    .feature-icon {
+        font-size: 1.5rem;
+        padding: 0.7rem;
+    }
 }
+
