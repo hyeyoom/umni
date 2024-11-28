@@ -34,7 +34,6 @@ export default function UmniRun() {
     const [autoCompletePosition, setAutoCompletePosition] = useState({top: 0, left: 0});
     const [filteredSuggestions, setFilteredSuggestions] = useState<Suggestion[]>([]);
     const [selectedIndex, setSelectedIndex] = useState<number>(0);
-    const [currentWord, setCurrentWord] = useState<string>("");
 
     useEffect(() => {
         setIsClient(true);
@@ -115,7 +114,6 @@ export default function UmniRun() {
             }
 
             setFilteredSuggestions(filtered);
-            setCurrentWord(currentWord);
 
             if (filtered.length > 0) {
                 const rect = e.target.getBoundingClientRect();
