@@ -1,6 +1,5 @@
 // IdentifierToken.ts
-import { Token } from './Token';
-import { keywords } from '../Keywords';
+import {keywords, Token} from '@/lib';
 
 export class IdentifierToken extends Token {
     constructor(public name: string) {

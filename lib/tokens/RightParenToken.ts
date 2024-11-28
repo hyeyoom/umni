@@ -1,4 +1,5 @@
 // RightParenToken.ts
-import { Token } from './Token';
+import {Token} from '@/lib';
 
-export class RightParenToken extends Token {}
+export class RightParenToken extends Token {
+}

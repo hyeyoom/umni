@@ -37,7 +37,8 @@ type TokenConstructor<T extends Token> = new (...args: unknown[]) => T;
 export class Parser {
     private position = 0;
 
-    constructor(private tokens: Token[]) {}
+    constructor(private tokens: Token[]) {
+    }
 
     parse(): ASTNode {
         return this.parseStatement();

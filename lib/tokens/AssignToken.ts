@@ -1,4 +1,5 @@
 // AssignToken.ts
-import { Token } from './Token';
+import {Token} from '@/lib';
 
-export class AssignToken extends Token {}
+export class AssignToken extends Token {
+}

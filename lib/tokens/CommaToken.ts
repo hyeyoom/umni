@@ -1,4 +1,5 @@
 // CommaToken.ts
-import { Token } from './Token';
+import {Token} from '@/lib';
 
-export class CommaToken extends Token {}
+export class CommaToken extends Token {
+}

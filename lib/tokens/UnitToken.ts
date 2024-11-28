@@ -1,5 +1,5 @@
 // UnitToken.ts
-import { Token } from './Token';
+import {Token} from '@/lib';
 
 export class UnitToken extends Token {
     static SUPPORT_UNITS = new Set(['m', 'cm', 'mm', 'km', 'kb', 'mb', 'gb']);

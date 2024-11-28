@@ -1,4 +1,5 @@
 // NumberToken.ts
-import { Token } from './Token';
+import {Token} from '@/lib';
 
-export abstract class NumberToken extends Token {}
+export abstract class NumberToken extends Token {
+}

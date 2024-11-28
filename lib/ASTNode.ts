@@ -1,5 +1,6 @@
 // ASTNode.ts
-export abstract class ASTNode {}
+export abstract class ASTNode {
+}
 
 export class RealNode extends ASTNode {
     constructor(public value: number) {

@@ -1,4 +1,5 @@
 // OperatorToken.ts
-import { Token } from './Token';
+import {Token} from '@/lib';
 
-export abstract class OperatorToken extends Token {}
+export abstract class OperatorToken extends Token {
+}

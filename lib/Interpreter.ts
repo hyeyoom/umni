@@ -26,7 +26,8 @@ import {Environment} from './Environment';
 import {UnitConverter} from './UnitConverter';
 
 export class Interpreter {
-    constructor(private environment: Environment = new Environment()) {}
+    constructor(private environment: Environment = new Environment()) {
+    }
 
     interpret(node: ASTNode): ComputedValue {
         if (node instanceof RealNode) {

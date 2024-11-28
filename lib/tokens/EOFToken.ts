@@ -1,4 +1,5 @@
 // EOFToken.ts
-import { Token } from './Token';
+import {Token} from '@/lib';
 
-export class EOFToken extends Token {}
+export class EOFToken extends Token {
+}

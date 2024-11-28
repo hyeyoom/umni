@@ -1,4 +1,5 @@
 // FunctionDeclarationToken.ts
-import { Token } from './Token';
+import {Token} from '@/lib';
 
-export class FunctionDeclarationToken extends Token {}
+export class FunctionDeclarationToken extends Token {
+}
