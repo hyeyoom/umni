@@ -160,7 +160,7 @@ export class Interpreter {
             case '<=':
             case '==':
             case '!=':
-                return this.handleComparison(left, right, operator);
+                return this.handleComparison(left, operator, right);
             default:
                 throw new Error(`Unknown operator: ${operator}`);
         }
@@ -168,47 +168,51 @@ export class Interpreter {
 
     private handleComparison(
         left: ComputedValue,
-        right: ComputedValue,
         operator: string,
+        right: ComputedValue
     ): LogicalValue {
-        if (left instanceof RealValue || left instanceof NaturalValue || left instanceof WithUnitValue) {
-            const leftValue = left.value;
-            const rightValue = right instanceof RealValue || right instanceof NaturalValue || right instanceof WithUnitValue ? right.value : null;
+        if (left instanceof WithUnitValue || right instanceof WithUnitValue) {
+            let targetUnit: string;
+            let leftValue: number;
+            let rightValue: number;
 
-            if (rightValue === null) {
-                throw new Error(`Right operand cannot be null for operator ${operator}`);
+            if (left instanceof WithUnitValue && right instanceof WithUnitValue) {
+                targetUnit = left.unit;
+                leftValue = left.value;
+                rightValue = UnitConverter.convert(right.value, right.unit, targetUnit);
+            } else if (left instanceof WithUnitValue) {
+                targetUnit = left.unit;
+                leftValue = left.value;
+                rightValue = (right as RealValue | NaturalValue).value;
+            } else {
+                targetUnit = (right as WithUnitValue).unit;
+                leftValue = (left as RealValue | NaturalValue).value;
+                rightValue = (right as WithUnitValue).value;
             }
 
             switch (operator) {
-                case '>':
-                    return new LogicalValue(leftValue > rightValue);
-                case '>=':
-                    return new LogicalValue(leftValue >= rightValue);
-                case '<':
-                    return new LogicalValue(leftValue < rightValue);
-                case '<=':
-                    return new LogicalValue(leftValue <= rightValue);
-                case '==':
-                    return new LogicalValue(leftValue === rightValue);
-                case '!=':
-                    return new LogicalValue(leftValue !== rightValue);
-                default:
-                    throw new Error(`Unable to use operator: ${operator}`);
+                case '>': return new LogicalValue(leftValue > rightValue);
+                case '>=': return new LogicalValue(leftValue >= rightValue);
+                case '<': return new LogicalValue(leftValue < rightValue);
+                case '<=': return new LogicalValue(leftValue <= rightValue);
+                case '==': return new LogicalValue(leftValue === rightValue);
+                case '!=': return new LogicalValue(leftValue !== rightValue);
+                default: throw new Error(`Unknown comparison operator: ${operator}`);
             }
         }
 
-        if (left instanceof LogicalValue && right instanceof LogicalValue) {
-            switch (operator) {
-                case '==':
-                    return new LogicalValue(left.value === right.value);
-                case '!=':
-                    return new LogicalValue(left.value !== right.value);
-                default:
-                    throw new Error(`Unable to use operator: ${operator}`);
-            }
-        }
+        const leftValue = (left as RealValue | NaturalValue).value;
+        const rightValue = (right as RealValue | NaturalValue).value;
 
-        throw new Error(`Unsupported operands for operator ${operator}: ${left.toString()} and ${right.toString()}`);
+        switch (operator) {
+            case '>': return new LogicalValue(leftValue > rightValue);
+            case '>=': return new LogicalValue(leftValue >= rightValue);
+            case '<': return new LogicalValue(leftValue < rightValue);
+            case '<=': return new LogicalValue(leftValue <= rightValue);
+            case '==': return new LogicalValue(leftValue === rightValue);
+            case '!=': return new LogicalValue(leftValue !== rightValue);
+            default: throw new Error(`Unknown comparison operator: ${operator}`);
+        }
     }
 
     private handleAddition(
