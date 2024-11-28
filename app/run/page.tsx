@@ -9,6 +9,7 @@ import {Parser} from "@/lib/Parser";
 import '../globals.css'
 import AutoComplete from '../components/AutoComplete';
 import {Suggestion} from '../types/suggestion';
+import FloatingButton from '../components/FloatingButton';
 
 const STATIC_SUGGESTIONS: Suggestion[] = [
     {text: 'fn', type: 'keyword', description: '함수 선언'},
@@ -209,7 +210,7 @@ export default function UmniRun() {
             const numberStartIndex = numberMatch.index || 0;
             const number = numberMatch[0];
 
-            // 숫자를 유지하고 그 뒤에 단위 추가
+            // 숫자를 유지하고 ��� 뒤에 단위 추가
             const newText = currentLine.slice(0, numberStartIndex) +
                 number + suggestion.text +
                 currentLine.slice(numberStartIndex + number.length);
@@ -252,6 +253,22 @@ export default function UmniRun() {
         }, 200);
     };
 
+    const handleReset = () => {
+        // 모든 상태 초기화
+        setLines([{expression: "", result: ""}]);
+        setAutoCompleteVisible(false);
+        setSelectedIndex(0);
+        
+        // Environment 초기화
+        environmentRef.current = new Environment();
+        interpreterRef.current = new Interpreter(environmentRef.current);
+        
+        // 첫 번째 입력창에 포커스
+        setTimeout(() => {
+            inputRefs.current[0]?.focus();
+        }, 0);
+    };
+
     return (
         <div className="container">
             {lines.map((line, index) => (
@@ -277,6 +294,7 @@ export default function UmniRun() {
                 visible={autoCompleteVisible}
                 selectedIndex={selectedIndex}
             />
+            <FloatingButton onClick={handleReset} />
         </div>
     );
 }
