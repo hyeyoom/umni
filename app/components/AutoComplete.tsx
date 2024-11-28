@@ -1,14 +1,15 @@
 import React from 'react';
-import { Suggestion } from '../types/suggestion';
+import {Suggestion} from '../types/suggestion';
 
 interface AutoCompleteProps {
     suggestions: Suggestion[];
     onSelect: (suggestion: Suggestion) => void;
     position: { top: number; left: number };
     visible: boolean;
+    selectedIndex: number;
 }
 
-export default function AutoComplete({ suggestions, onSelect, position, visible }: AutoCompleteProps) {
+export default function AutoComplete({suggestions, onSelect, position, visible, selectedIndex}: AutoCompleteProps) {
     if (!visible || suggestions.length === 0) return null;
 
     return (
@@ -22,7 +23,7 @@ export default function AutoComplete({ suggestions, onSelect, position, visible 
             {suggestions.map((suggestion, index) => (
                 <div
                     key={index}
-                    className="autocomplete-item"
+                    className={`autocomplete-item ${index === selectedIndex ? 'selected' : ''}`}
                     onClick={() => onSelect(suggestion)}
                 >
                     <span className={`type-indicator ${suggestion.type}`}>
@@ -38,4 +39,4 @@ export default function AutoComplete({ suggestions, onSelect, position, visible 
             ))}
         </div>
     );
-} 
+}

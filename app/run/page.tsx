@@ -22,7 +22,7 @@ const SUGGESTIONS: Suggestion[] = [
     {text: 'kb', type: 'unit', description: '킬로바이트'},
     {text: 'mb', type: 'unit', description: '메가바이트'},
     {text: 'gb', type: 'unit', description: '기가바이트'},
-    {text: 'b64Encode', type: 'function', description: 'Base64 인코딩'},
+    {text: 'b64Encode', type: 'function', description: 'Base64 ��코딩'},
     {text: 'b64Decode', type: 'function', description: 'Base64 디코딩'},
     {text: 'type', type: 'function', description: '타입 확인'},
 ];
@@ -37,6 +37,7 @@ export default function UmniRun() {
     const [autoCompleteVisible, setAutoCompleteVisible] = useState(false);
     const [autoCompletePosition, setAutoCompletePosition] = useState({top: 0, left: 0});
     const [filteredSuggestions, setFilteredSuggestions] = useState<Suggestion[]>([]);
+    const [selectedIndex, setSelectedIndex] = useState<number>(0);
 
     useEffect(() => {
         setIsClient(true);
@@ -86,6 +87,7 @@ export default function UmniRun() {
             setFilteredSuggestions(filtered);
 
             if (filtered.length > 0) {
+                setSelectedIndex(0);
                 const rect = e.target.getBoundingClientRect();
                 const wordStart = textBeforeCursor.length - currentWord.length;
                 const charWidth = 9.6; // 예상 문자 너비
@@ -128,6 +130,26 @@ export default function UmniRun() {
     };
 
     const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+        if (autoCompleteVisible) {
+            if (e.key === "ArrowDown") {
+                e.preventDefault();
+                setSelectedIndex(prev =>
+                    prev < filteredSuggestions.length - 1 ? prev + 1 : prev
+                );
+                return;
+            }
+            if (e.key === "ArrowUp") {
+                e.preventDefault();
+                setSelectedIndex(prev => prev > 0 ? prev - 1 : prev);
+                return;
+            }
+            if (e.key === "Enter" && filteredSuggestions.length > 0) {
+                e.preventDefault();
+                handleSuggestionSelect(filteredSuggestions[selectedIndex], index);
+                return;
+            }
+        }
+
         // 자동완성 툴팁을 숨기는 키 이벤트들
         if (e.key === "Enter" || e.key === "Escape" || e.key === "Tab") {
             setAutoCompleteVisible(false);
@@ -152,36 +174,46 @@ export default function UmniRun() {
     const handleSuggestionSelect = (suggestion: Suggestion, index: number) => {
         const currentLine = lines[index].expression;
         const cursorPosition = inputRefs.current[index]?.selectionStart || 0;
-        const textBeforeCursor = currentLine.slice(0, cursorPosition);
-        const textAfterCursor = currentLine.slice(cursorPosition);
 
-        // 현재 단어 추출 (숫자+문자 패턴도 포함)
-        const match = textBeforeCursor.match(/[a-zA-Z0-9_가-힣]+$/);
-        const lastWord = match ? match[0] : '';
+        // 현재 라인에서 숫자 찾기 (전체 라인에서 검색)
+        const numberMatch = currentLine.match(/\d+/);
+        if (numberMatch && suggestion.type === 'unit') {
+            const numberStartIndex = numberMatch.index || 0;
+            const number = numberMatch[0];
 
-        let replacementText = suggestion.text;
+            // 숫자를 유지하고 그 뒤에 단위 추가
+            const newText = currentLine.slice(0, numberStartIndex) +
+                number + suggestion.text +
+                currentLine.slice(numberStartIndex + number.length);
 
-        // 숫자로 시작하는 경우, 숫자는 유지하고 단위만 교체
-        if (/^\d+/.test(lastWord) && suggestion.type === 'unit') {
-            const numericPart = lastWord.match(/^\d+/)[0];
-            replacementText = numericPart + suggestion.text;
+            const newLines = [...lines];
+            newLines[index].expression = newText;
+            setLines(newLines);
+
+            // 커서를 추가된 단위 뒤로 이동
+            setTimeout(() => {
+                const newPosition = numberStartIndex + number.length + suggestion.text.length;
+                inputRefs.current[index]?.setSelectionRange(newPosition, newPosition);
+                inputRefs.current[index]?.focus();
+            }, 0);
+        } else {
+            // 숫자가 없거나 단위가 아닌 경우 기존 로직
+            const newText = currentLine.slice(0, cursorPosition) +
+                suggestion.text +
+                currentLine.slice(cursorPosition);
+
+            const newLines = [...lines];
+            newLines[index].expression = newText;
+            setLines(newLines);
+
+            setTimeout(() => {
+                const newPosition = cursorPosition + suggestion.text.length;
+                inputRefs.current[index]?.setSelectionRange(newPosition, newPosition);
+                inputRefs.current[index]?.focus();
+            }, 0);
         }
 
-        const newText = textBeforeCursor.slice(0, -lastWord.length) +
-            replacementText +
-            textAfterCursor;
-
-        const newLines = [...lines];
-        newLines[index].expression = newText;
-        setLines(newLines);
         setAutoCompleteVisible(false);
-
-        // 커서 위치 조정
-        setTimeout(() => {
-            const newPosition = cursorPosition - lastWord.length + replacementText.length;
-            inputRefs.current[index]?.setSelectionRange(newPosition, newPosition);
-            inputRefs.current[index]?.focus();
-        }, 0);
     };
 
     // 입력창이 포커스를 잃었을 때도 툴팁을 숨김
@@ -215,6 +247,7 @@ export default function UmniRun() {
                 onSelect={(suggestion) => handleSuggestionSelect(suggestion, lines.length - 1)}
                 position={autoCompletePosition}
                 visible={autoCompleteVisible}
+                selectedIndex={selectedIndex}
             />
         </div>
     );

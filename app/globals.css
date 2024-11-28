@@ -383,3 +383,7 @@ body {
     margin-left: auto;
 }
 
+.autocomplete-item.selected {
+    background-color: #3a3a3a;
+}
+
