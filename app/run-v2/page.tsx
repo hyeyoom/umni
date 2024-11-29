@@ -250,7 +250,7 @@ export default function UmniRunV2() {
                 e.preventDefault();
                 setSelectedIndex(prev => prev > 0 ? prev - 1 : prev);
                 break;
-            case 'Enter':
+            case 'Tab':
                 e.preventDefault();
                 if (filteredSuggestions[selectedIndex]) {
                     handleSuggestionSelect(filteredSuggestions[selectedIndex]);
