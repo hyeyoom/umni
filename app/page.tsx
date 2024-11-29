@@ -8,105 +8,139 @@ import {Lexer} from "@/lib/Lexer";
 import {Parser} from "@/lib/Parser";
 import './globals.css'
 
+const TYPING_CONFIG = {
+    CHAR_DELAY: 10,
+    LINE_DELAY: 500,
+    SET_DELAY: 2000,
+    FADE_DURATION: 300
+};
+
 const DEMO_EXPRESSIONS = [
     [
-        {expression: "fn 원의넓이(r) = pi * r * r", delay: 50},
-        {expression: "r = 3", delay: 50},
-        {expression: "원의넓이(3)", delay: 50},
+        {expression: "fn 원의넓이(r) = pi * r * r"},
+        {expression: "r = 3"},
+        {expression: "원의넓이(3)"},
     ],
     [
-        {expression: "origin = 'Hello Umni'", delay: 50},
-        {expression: "e = b64Encode(origin)", delay: 50},
-        {expression: "d = b64Decode(e)", delay: 50},
-        {expression: "type(origin)", delay: 50},
+        {expression: "origin = 'Hello Umni'"},
+        {expression: "e = b64Encode(origin)"},
+        {expression: "d = b64Decode(e)"},
+        {expression: "type(origin)"},
     ],
     [
-        {expression: "x = 5km", delay: 50},
-        {expression: "y = 3km", delay: 50},
-        {expression: "x + y to m", delay: 60}
+        {expression: "x = 5km"},
+        {expression: "y = 3km"},
+        {expression: "x + y to m"}
     ],
     [
-        {expression: "width = 1920", delay: 50},
-        {expression: "height = 1080", delay: 50},
-        {expression: "width / 16", delay: 60}
-    ]
+        {expression: "width = 1920"},
+        {expression: "height = 1080"},
+        {expression: "ratio = width / height"},
+        {expression: "width = ratio * height"},
+    ],
 ];
 
 export default function Home() {
     const [displayLines, setDisplayLines] = useState<{ expression: string; result: string }[]>([]);
     const [currentLine, setCurrentLine] = useState(0);
-    const [cursorPosition, setCursorPosition] = useState(0);
     const [isFading, setIsFading] = useState(false);
     const environmentRef = useRef(new Environment());
     const interpreterRef = useRef(new Interpreter(environmentRef.current));
     const demoSetIndexRef = useRef(0);
     const timeoutRef = useRef<NodeJS.Timeout>();
+    const animationFrameRef = useRef<number>();
 
     useEffect(() => {
-        const typeNextCharacter = () => {
+        const processLine = async (expression: string): Promise<string> => {
+            try {
+                const lexer = new Lexer(expression);
+                const tokens = lexer.tokenize();
+                const parser = new Parser(tokens);
+                const ast = parser.parse();
+                return interpreterRef.current.interpret(ast).toString();
+            } catch (error) {
+                console.error(error);
+                return 'Error';
+            }
+        };
+
+        const typeCharacter = () => {
             const currentSet = DEMO_EXPRESSIONS[demoSetIndexRef.current];
             const currentExpression = currentSet[currentLine];
 
             if (!currentExpression) return;
 
-            if (cursorPosition < currentExpression.expression.length) {
-                setDisplayLines(prev => {
-                    const newLines = [...prev];
-                    if (!newLines[currentLine]) {
-                        newLines[currentLine] = {expression: "", result: ""};
-                    }
-                    newLines[currentLine].expression =
-                        currentExpression.expression.substring(0, cursorPosition + 1);
-                    return newLines;
-                });
-                setCursorPosition(prev => prev + 1);
-                timeoutRef.current = setTimeout(typeNextCharacter, currentExpression.delay);
-            } else {
-                // 현재 줄의 결과 계산
-                try {
-                    const lexer = new Lexer(currentExpression.expression);
-                    const tokens = lexer.tokenize();
-                    const parser = new Parser(tokens);
-                    const ast = parser.parse();
-                    const result = interpreterRef.current.interpret(ast);
-                    setDisplayLines(prev => {
-                        const newLines = [...prev];
-                        newLines[currentLine].result = result.toString();
-                        return newLines;
-                    });
-                } catch (error) {
-                    console.error(error);
-                }
+            let lastTimestamp = 0;
+            let currentCursorPos = 0;
 
-                // 다음 줄로 이동 또는 다음 세트로 전환
-                if (currentLine < currentSet.length - 1) {
-                    setCurrentLine(prev => prev + 1);
-                    setCursorPosition(0);
-                    timeoutRef.current = setTimeout(typeNextCharacter, 500);
-                } else {
-                    timeoutRef.current = setTimeout(() => {
-                        setIsFading(true);
-                        setTimeout(() => {
-                            setDisplayLines([]);
-                            setCurrentLine(0);
-                            setCursorPosition(0);
-                            setIsFading(false);
-                            demoSetIndexRef.current = (demoSetIndexRef.current + 1) % DEMO_EXPRESSIONS.length;
-                            timeoutRef.current = setTimeout(typeNextCharacter, 500);
-                        }, 300);
-                    }, 2000);
+            const animate = (timestamp: number) => {
+                if (!lastTimestamp) lastTimestamp = timestamp;
+                const elapsed = timestamp - lastTimestamp;
+
+                if (elapsed >= TYPING_CONFIG.CHAR_DELAY) {
+                    if (currentCursorPos < currentExpression.expression.length) {
+                        setDisplayLines(prev => {
+                            const newLines = [...prev];
+                            if (!newLines[currentLine]) {
+                                newLines[currentLine] = {expression: "", result: ""};
+                            }
+                            newLines[currentLine].expression =
+                                currentExpression.expression.substring(0, currentCursorPos + 1);
+                            return newLines;
+                        });
+                        currentCursorPos++;
+                        lastTimestamp = timestamp;
+                    } else {
+                        // 타이핑 완료
+                        processLine(currentExpression.expression).then(result => {
+                            setDisplayLines(prev => {
+                                const newLines = [...prev];
+                                newLines[currentLine].result = result;
+                                return newLines;
+                            });
+
+                            if (currentLine < currentSet.length - 1) {
+                                setTimeout(() => {
+                                    setCurrentLine(prev => prev + 1);
+                                    typeCharacter();
+                                }, TYPING_CONFIG.LINE_DELAY);
+                            } else {
+                                nextSet();
+                            }
+                        });
+                        return;
+                    }
                 }
-            }
+                animationFrameRef.current = requestAnimationFrame(animate);
+            };
+
+            animationFrameRef.current = requestAnimationFrame(animate);
         };
 
-        timeoutRef.current = setTimeout(typeNextCharacter, 500);
+        const nextSet = () => {
+            setTimeout(() => {
+                setIsFading(true);
+                setTimeout(() => {
+                    setDisplayLines([]);
+                    setCurrentLine(0);
+                    setIsFading(false);
+                    demoSetIndexRef.current = (demoSetIndexRef.current + 1) % DEMO_EXPRESSIONS.length;
+                    typeCharacter();
+                }, TYPING_CONFIG.FADE_DURATION);
+            }, TYPING_CONFIG.SET_DELAY);
+        };
+
+        timeoutRef.current = setTimeout(typeCharacter, TYPING_CONFIG.LINE_DELAY);
 
         return () => {
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current);
             }
+            if (animationFrameRef.current) {
+                cancelAnimationFrame(animationFrameRef.current);
+            }
         };
-    }, [currentLine, cursorPosition]);
+    }, [currentLine]);
 
     return (
         <main className="landing-page">
@@ -126,18 +160,10 @@ export default function Home() {
                                     readOnly
                                     placeholder="Empty Line"
                                 />
-                                {index === currentLine && (
-                                    <div
-                                        className="cursor"
-                                        style={{
-                                            left: `${cursorPosition * 0.61}em`
-                                        }}
-                                    />
-                                )}
                             </div>
                             <span className="result">
-                {line.result}
-              </span>
+                                {line.result}
+                            </span>
                         </div>
                     ))}
                 </div>
