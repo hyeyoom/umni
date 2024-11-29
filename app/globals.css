@@ -431,3 +431,90 @@ body {
     animation: fadeIn 0.3s ease;
 }
 
+.editor-container {
+    display: flex;
+    height: 100vh;
+    padding: 2rem;
+    background-color: var(--background);
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.editor-wrapper {
+    position: relative;
+    flex: 1;
+    height: 100%;
+}
+
+.code-editor {
+    width: 100%;
+    height: 100%;
+    font-family: var(--font-geist-mono);
+    font-size: 1.5rem;
+    line-height: 2.4;
+    padding: 0;
+    background-color: transparent;
+    border: none;
+    color: var(--foreground);
+    resize: none;
+    outline: none;
+    padding-right: 240px;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+.code-editor::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
+.results-overlay {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 240px;
+    overflow-y: scroll;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+.results-overlay::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
+.results-content {
+    position: relative;
+}
+
+.result-line {
+    color: #8EFF1E;
+    opacity: 0.8;
+    font-family: var(--font-geist-mono);
+    font-size: 1.5rem;
+    line-height: 2.4;
+    height: calc(1.5rem * 2.4);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    padding: 0 0.5rem;
+    border-radius: 4px;
+    transition: opacity 0.2s;
+    max-width: 180px;
+    width: 100%;
+}
+
+.result-line:hover {
+    opacity: 1;
+}
+
+/* 모바일 대응 */
+@media (max-width: 1200px) {
+    .results-overlay {
+        right: 2rem;
+    }
+}
+
