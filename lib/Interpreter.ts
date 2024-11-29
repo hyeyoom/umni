@@ -39,15 +39,7 @@ export class Interpreter {
         } else if (node instanceof StringLiteralNode) {
             return new StringValue(node.value);
         } else if (node instanceof VariableNode) {
-            const value =
-                this.environment.variables.get(node.name) ||
-                this.environment.constants.get(node.name);
-
-            if (value !== undefined) {
-                return value;
-            } else {
-                throw new Error(`Undefined variable: ${node.name}`);
-            }
+            return this.interpretVariable(node);
         } else if (node instanceof UnaryOperationNode) {
             const operand = this.interpret(node.operand);
             return this.evaluateUnaryOperation(node.operator, operand);
@@ -56,12 +48,9 @@ export class Interpreter {
             const right = this.interpret(node.right);
             return this.evaluateBinaryOperation(left, node.operator, right);
         } else if (node instanceof AssignmentNode) {
-            const value = this.interpret(node.value);
-            this.assignValue(node.left, value);
-            return value;
+            return this.interpretAssignment(node);
         } else if (node instanceof FunctionDeclarationNode) {
-            this.environment.functions.set(node.name, node);
-            return new FunctionIsDefined();
+            return this.interpretFunctionDeclaration(node);
         } else if (node instanceof FunctionCallNode) {
             const builtInFunction = this.environment.builtInFunctions.get(node.name);
             if (builtInFunction) {
@@ -130,14 +119,46 @@ export class Interpreter {
         throw new Error(`Unknown unary operator: ${operator}`);
     }
 
-    private assignValue(target: ASTNode, value: ComputedValue): void {
-        if (target instanceof VariableNode) {
-            this.environment.variables.set(target.name, value);
-        } else if (target instanceof AssignmentNode) {
-            this.assignValue(target.left, value);
-        } else {
-            throw new Error(`Invalid assignment target: ${target.constructor.name}`);
+    private interpretVariable(node: VariableNode): ComputedValue {
+        const name = node.name;
+        
+        // 먼저 상수인지 확인
+        if (this.environment.constants.has(name)) {
+            return this.environment.constants.get(name)!;
         }
+        
+        // 변수인지 확인
+        if (this.environment.variables.has(name)) {
+            return this.environment.variables.get(name)!;
+        }
+        
+        throw new Error(`Undefined variable '${name}'`);
+    }
+
+    private interpretAssignment(node: AssignmentNode): ComputedValue {
+        if (node.left instanceof VariableNode) {
+            const variableName = node.left.name;
+            
+            // 상수인지 확인
+            if (this.environment.constants.has(variableName)) {
+                throw new Error(`Cannot assign to constant '${variableName}'`);
+            }
+
+            const value = this.interpret(node.value);
+            this.environment.variables.set(variableName, value);
+            return value;
+        }
+        throw new Error('Invalid assignment target');
+    }
+
+    private interpretFunctionDeclaration(node: FunctionDeclarationNode): ComputedValue {
+        // 함수 이름이 상수인지 확인
+        if (this.environment.constants.has(node.name)) {
+            throw new Error(`Cannot declare constant '${node.name}' as function`);
+        }
+
+        this.environment.functions.set(node.name, node);
+        return new FunctionIsDefined();
     }
 
     private evaluateBinaryOperation(

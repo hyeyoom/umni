@@ -168,4 +168,20 @@ describe('Interpreter', () => {
             expect(() => evaluate('42 * "Hello"')).toThrow('Invalid operands');
         });
     });
+
+    describe('상수', () => {
+        it('상수 값을 참조할 수 있다', () => {
+            expect(evaluate('pi')).toEqual(new RealValue(Math.PI));
+            expect(evaluate('e')).toEqual(new RealValue(Math.E));
+        });
+
+        it('상수에 값을 할당하려고 하면 에러를 발생시킨다', () => {
+            expect(() => evaluate('pi = 3')).toThrow("Cannot assign to constant 'pi'");
+            expect(() => evaluate('e = 2.7')).toThrow("Cannot assign to constant 'e'");
+        });
+
+        it('상수를 함수로 선언하려고 하면 에러를 발생시킨다', () => {
+            expect(() => evaluate('fn pi() = 3.14')).toThrow("Cannot declare constant 'pi' as function");
+        });
+    });
 });
