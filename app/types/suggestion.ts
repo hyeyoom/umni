@@ -1,5 +1,5 @@
 export interface Suggestion {
     text: string;
-    type: 'keyword' | 'function' | 'unit' | 'variable';
+    type: 'keyword' | 'unit' | 'variable' | 'function' | 'constant';
     description?: string;
-} 
+}

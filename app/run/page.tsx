@@ -126,6 +126,15 @@ export default function UmniRunV2() {
             });
         });
 
+        // 상수 추가
+        environmentRef.current.constants.forEach((value, name) => {
+            suggestions.push({
+                text: name,
+                type: 'constant',
+                description: ` 상수 (${value.toString()})`
+            });
+        });
+
         // 사용자 정의 함수 추가
         environmentRef.current.functions.forEach((func, name) => {
             const params = func.parameters.join(', ');
