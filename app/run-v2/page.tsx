@@ -189,27 +189,48 @@ export default function UmniRunV2() {
         const lines = textBeforeCursor.split('\n');
         const currentLineNumber = lines.length - 1;
         const currentLine = lines[currentLineNumber];
-
+        
         const lineHeight = 1.5 * 2.4 * 16; // fontSize * lineHeight * 16(rem to px)
         const charWidth = 14.4; // fontSize * 0.6 * 16(rem to px)
+        
+        // 스크롤 위치를 고려한 위치 계산
+        const top = rect.top + (currentLineNumber * lineHeight) + lineHeight - target.scrollTop;
+        const left = rect.left + (currentLine.length - currentWord.length) * charWidth;
 
         setAutoCompletePosition({
-            top: rect.top + (currentLineNumber * lineHeight) + lineHeight - target.scrollTop,
-            left: rect.left + (currentLine.length - currentWord.length) * charWidth
+            top: top + window.scrollY, // 페이지 스크롤 위치 추가
+            left: left
         });
     };
 
     // 자동완성 선택 처리
     const handleSuggestionSelect = (suggestion: Suggestion) => {
         if (!editorRef.current) return;
-
+        
         const cursorPos = editorRef.current.selectionStart;
         const text = editorRef.current.value;
         const currentWord = getCurrentWord();
-        const textBeforeCursor = text.slice(0, cursorPos - currentWord.length);
-        const textAfterCursor = text.slice(cursorPos);
+        
+        // 숫자 다음에 단위가 오는 경우를 처리
+        const beforeCursor = text.slice(0, cursorPos);
+        const afterCursor = text.slice(cursorPos);
+        let newText;
 
-        setCode(textBeforeCursor + suggestion.text + textAfterCursor);
+        if (/^\d+$/.test(currentWord)) {
+            // 숫자만 있는 경우, 숫자를 유지하고 단위를 추가
+            newText = beforeCursor + suggestion.text + afterCursor;
+        } else if (/^\d+[a-zA-Z]+$/.test(currentWord)) {
+            // 숫자+단위가 있는 경우, 숫자는 유지하고 단위만 교체
+            const numberPart = currentWord.match(/^\d+/)?.[0] || '';
+            const wordStart = cursorPos - currentWord.length;
+            newText = text.slice(0, wordStart) + numberPart + suggestion.text + afterCursor;
+        } else {
+            // 일반적인 경우
+            const wordStart = cursorPos - currentWord.length;
+            newText = text.slice(0, wordStart) + suggestion.text + afterCursor;
+        }
+        
+        setCode(newText);
         setAutoCompleteVisible(false);
         editorRef.current.focus();
     };
@@ -240,6 +261,26 @@ export default function UmniRunV2() {
                 break;
         }
     };
+
+    // 스크롤 이벤트 핸들러 추가
+    useEffect(() => {
+        const textarea = editorRef.current;
+        if (!textarea) return;
+
+        const handleScroll = () => {
+            if (autoCompleteVisible) {
+                updateAutoCompletePosition(textarea);
+            }
+        };
+
+        textarea.addEventListener('scroll', handleScroll);
+        window.addEventListener('scroll', handleScroll);
+        
+        return () => {
+            textarea.removeEventListener('scroll', handleScroll);
+            window.removeEventListener('scroll', handleScroll);
+        };
+    }, [autoCompleteVisible]);
 
     return (
         <div className="editor-container">
