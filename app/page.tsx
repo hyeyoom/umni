@@ -23,8 +23,8 @@ const DEMO_EXPRESSIONS = [
     ],
     [
         {expression: "origin = 'Hello Umni'"},
-        {expression: "e = b64Encode(origin)"},
-        {expression: "d = b64Decode(e)"},
+        {expression: "enc = b64Encode(origin)"},
+        {expression: "dec = b64Decode(enc)"},
         {expression: "type(origin)"},
     ],
     [
