@@ -279,7 +279,7 @@ export default function UmniRunV2() {
 
         textarea.addEventListener('scroll', handleScroll);
         window.addEventListener('scroll', handleScroll);
-        
+
         return () => {
             textarea.removeEventListener('scroll', handleScroll);
             window.removeEventListener('scroll', handleScroll);
