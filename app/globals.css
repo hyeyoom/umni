@@ -334,10 +334,10 @@ body {
 }
 
 .autocomplete-item {
-    padding: 8px 12px;
+    padding: 8px 16px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 16px;
     cursor: pointer;
     transition: all 0.2s ease;
     white-space: nowrap;
@@ -387,7 +387,7 @@ body {
 .suggestion-description {
     color: #888888;
     font-size: 0.9rem;
-    margin-left: auto;
+    margin-left: 24px;
 }
 
 .floating-button {
