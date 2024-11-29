@@ -1,15 +1,16 @@
-// app/page.tsx
-"use client";
+'use client';
 
-import React, {useEffect, useRef, useState} from "react";
-import {Environment} from "@/lib/Environment";
-import {Interpreter} from "@/lib/Interpreter";
-import {Lexer} from "@/lib/Lexer";
-import {Parser} from "@/lib/Parser";
-import '../globals.css'
+import React, {useEffect, useRef, useState} from 'react';
+import {Environment} from '@/lib/Environment';
+import {Interpreter} from '@/lib/Interpreter';
+import {Lexer} from '@/lib/Lexer';
+import {Parser} from '@/lib/Parser';
+import FloatingButton from '../components/FloatingButton';
 import AutoComplete from '../components/AutoComplete';
 import {Suggestion} from '../types/suggestion';
-import FloatingButton from '../components/FloatingButton';
+import '../globals.css';
+
+const STORAGE_KEY = 'umni-v2-code';
 
 const STATIC_SUGGESTIONS: Suggestion[] = [
     {text: 'fn', type: 'keyword', description: '함수 선언'},
@@ -24,31 +25,93 @@ const STATIC_SUGGESTIONS: Suggestion[] = [
     {text: 'gb', type: 'unit', description: '기가바이트'},
 ];
 
-export default function UmniRun() {
-    const [lines, setLines] = useState<{ expression: string; result: string }[]>([{expression: "", result: ""}]);
-    const [isClient, setIsClient] = useState(false);
-    const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+export default function UmniRunV2() {
+    const [code, setCode] = useState<string>('');
+    const [results, setResults] = useState<{ line: number; result: string }[]>([]);
+
     const environmentRef = useRef(new Environment());
     const interpreterRef = useRef(new Interpreter(environmentRef.current));
-    const [debounceTimeout, setDebounceTimeout] = useState<number | undefined>(undefined);
+    const editorRef = useRef<HTMLTextAreaElement>(null);
+
     const [autoCompleteVisible, setAutoCompleteVisible] = useState(false);
     const [autoCompletePosition, setAutoCompletePosition] = useState({top: 0, left: 0});
     const [filteredSuggestions, setFilteredSuggestions] = useState<Suggestion[]>([]);
-    const [selectedIndex, setSelectedIndex] = useState<number>(0);
+    const [selectedIndex, setSelectedIndex] = useState(0);
 
+    // 초기 로드 시 localStorage에서 데이터 가져오기
     useEffect(() => {
-        setIsClient(true);
-        const savedLines = localStorage.getItem("lines");
-        if (savedLines) {
-            setLines(JSON.parse(savedLines));
+        const savedCode = localStorage.getItem(STORAGE_KEY);
+        if (savedCode) {
+            setCode(savedCode);
         }
     }, []);
 
+    // 코드가 변경될 때마다 localStorage에 저장
     useEffect(() => {
-        if (isClient) {
-            localStorage.setItem("lines", JSON.stringify(lines));
-        }
-    }, [lines, isClient]);
+        localStorage.setItem(STORAGE_KEY, code);
+    }, [code]);
+
+    useEffect(() => {
+        const lines = code.split('\n');
+        const newResults = lines.map((line, index) => {
+            if (!line.trim()) return {line: index, result: ''};
+
+            try {
+                const lexer = new Lexer(line);
+                const tokens = lexer.tokenize();
+                const parser = new Parser(tokens);
+                const ast = parser.parse();
+                const result = interpreterRef.current.interpret(ast);
+                return {line: index, result: String(result)};
+            } catch (e: unknown) {
+                console.error(e)
+                if (e instanceof Error) {
+                    return {line: index, result: ''};
+                }
+                return {line: index, result: ''};
+            }
+        });
+
+        setResults(newResults);
+    }, [code]);
+
+    // textarea 스크롤 위치를 결과창에 동기화
+    useEffect(() => {
+        const textarea = editorRef.current;
+        if (!textarea) return;
+
+        const handleScroll = () => {
+            const resultsOverlay = document.querySelector('.results-overlay');
+            if (resultsOverlay) {
+                resultsOverlay.scrollTop = textarea.scrollTop;
+            }
+        };
+
+        textarea.addEventListener('scroll', handleScroll);
+        return () => textarea.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    const handleReset = () => {
+        setCode('');
+        setResults([]);
+        localStorage.removeItem(STORAGE_KEY);
+        environmentRef.current = new Environment();
+        interpreterRef.current = new Interpreter(environmentRef.current);
+        editorRef.current?.focus();
+    };
+
+    // 현재 커서 위치의 단어 추출
+    const getCurrentWord = () => {
+        if (!editorRef.current) return '';
+
+        const cursorPosition = editorRef.current.selectionStart;
+        const text = editorRef.current.value;
+        const textBeforeCursor = text.slice(0, cursorPosition);
+
+        // 숫자 뒤에 오는 단어도 감지하도록 정규식 수정
+        const match = textBeforeCursor.match(/[a-zA-Z0-9_가-힣]+$/);
+        return match ? match[0] : '';
+    };
 
     // 현재 환경의 변수와 함수를 포함한 전체 제안 목록 생성
     const getAllSuggestions = (): Suggestion[] => {
@@ -59,7 +122,7 @@ export default function UmniRun() {
             suggestions.push({
                 text: name,
                 type: 'variable',
-                description: `변수 (${value.toString()})`
+                description: `사용자 정의 변수 (${value.toString()})`
             });
         });
 
@@ -85,20 +148,12 @@ export default function UmniRun() {
         return suggestions;
     };
 
-    const handleInputChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
-        const newLines = [...lines];
-        const value = e.target.value.replace(/"/g, "\"").replace(/"/g, "\"");
-        newLines[index].expression = value;
+    // 입력 처리 및 자동완성 필터링
+    const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        setCode(e.target.value);
 
-        // 현재 커서 위치의 단어 추출
-        const cursorPosition = e.target.selectionStart || 0;
-        const textBeforeCursor = value.slice(0, cursorPosition);
+        const currentWord = getCurrentWord();
 
-        // 숫자 뒤에 오는 단어도 감지하도록 정규식 수정
-        const match = textBeforeCursor.match(/[a-zA-Z0-9_가-힣]+$/);
-        const currentWord = match ? match[0] : '';
-
-        // 숫자로 시작하는 경우, 단위 제안만 필터링
         if (currentWord.length > 0) {
             let filtered;
             if (/^\d+$/.test(currentWord)) {
@@ -117,184 +172,161 @@ export default function UmniRun() {
             setFilteredSuggestions(filtered);
 
             if (filtered.length > 0) {
-                const rect = e.target.getBoundingClientRect();
-                const wordStart = textBeforeCursor.length - currentWord.length;
-                const charWidth = 9.6;
-                setAutoCompletePosition({
-                    top: rect.bottom + window.scrollY + 5,
-                    left: rect.left + wordStart * charWidth
-                });
+                updateAutoCompletePosition(e.target);
                 setAutoCompleteVisible(true);
+                setSelectedIndex(0);
             } else {
                 setAutoCompleteVisible(false);
             }
         } else {
             setAutoCompleteVisible(false);
         }
-
-        if (debounceTimeout) {
-            clearTimeout(debounceTimeout);
-        }
-        const timeout = window.setTimeout(() => {
-            newLines.forEach((line, i) => {
-                try {
-                    const expr = line.expression;
-                    const lexer = new Lexer(expr);
-                    const tokens = lexer.tokenize();
-                    const parser = new Parser(tokens);
-                    const ast = parser.parse();
-                    const evaluatedResult = interpreterRef.current.interpret(ast);
-                    newLines[i].result = evaluatedResult.toString();
-                } catch (error: unknown) {
-                    if (error instanceof Error) {
-                        // do nothing
-                    }
-                    newLines[i].result = "";
-                }
-            });
-            setLines(newLines);
-        }, 300);
-
-        setDebounceTimeout(timeout);
     };
 
-    const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
-        if (autoCompleteVisible) {
-            if (e.key === "ArrowDown") {
+    // 자동완성 위치 업데이트
+    const updateAutoCompletePosition = (target: HTMLTextAreaElement) => {
+        const rect = target.getBoundingClientRect();
+        const currentWord = getCurrentWord();
+        const text = target.value;
+        const cursorPosition = target.selectionStart || 0;
+        const textBeforeCursor = text.slice(0, cursorPosition);
+        const lines = textBeforeCursor.split('\n');
+        const currentLineNumber = lines.length - 1;
+        const currentLine = lines[currentLineNumber];
+
+        const lineHeight = 1.5 * 2.4 * 16; // fontSize * lineHeight * 16(rem to px)
+        const charWidth = 14.4; // fontSize * 0.6 * 16(rem to px)
+
+        // 스크롤 위치를 고려한 위치 계산
+        const top = rect.top + (currentLineNumber * lineHeight) + lineHeight - target.scrollTop;
+        const left = rect.left + (currentLine.length - currentWord.length) * charWidth;
+
+        setAutoCompletePosition({
+            top: top + window.scrollY, // 페이지 스크롤 위치 추가
+            left: left
+        });
+    };
+
+    // 자동완성 선택 처리
+    const handleSuggestionSelect = (suggestion: Suggestion) => {
+        if (!editorRef.current) return;
+
+        const cursorPos = editorRef.current.selectionStart;
+        const text = editorRef.current.value;
+        const currentWord = getCurrentWord();
+
+        // 숫자 다음에 단위가 오는 경우를 처리
+        const beforeCursor = text.slice(0, cursorPos);
+        const afterCursor = text.slice(cursorPos);
+        let newText;
+
+        if (/^\d+$/.test(currentWord)) {
+            // 숫자만 있는 경우, 숫자를 유지하고 단위를 추가
+            newText = beforeCursor + suggestion.text + afterCursor;
+        } else if (/^\d+[a-zA-Z]+$/.test(currentWord)) {
+            // 숫자+단위가 있는 경우, 숫자는 유지하고 단위만 교체
+            const numberPart = currentWord.match(/^\d+/)?.[0] || '';
+            const wordStart = cursorPos - currentWord.length;
+            newText = text.slice(0, wordStart) + numberPart + suggestion.text + afterCursor;
+        } else {
+            // 일반적인 경우
+            const wordStart = cursorPos - currentWord.length;
+            newText = text.slice(0, wordStart) + suggestion.text + afterCursor;
+        }
+
+        setCode(newText);
+        setAutoCompleteVisible(false);
+        editorRef.current.focus();
+    };
+
+    // 키보드 이벤트 처리
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (!autoCompleteVisible) return;
+
+        switch (e.key) {
+            case 'ArrowDown':
                 e.preventDefault();
                 setSelectedIndex(prev =>
                     prev < filteredSuggestions.length - 1 ? prev + 1 : prev
                 );
-                return;
-            }
-            if (e.key === "ArrowUp") {
+                break;
+            case 'ArrowUp':
                 e.preventDefault();
                 setSelectedIndex(prev => prev > 0 ? prev - 1 : prev);
-                return;
-            }
-            if (e.key === "Enter" && filteredSuggestions.length > 0) {
+                break;
+            case 'Tab':
                 e.preventDefault();
-                handleSuggestionSelect(filteredSuggestions[selectedIndex], index);
-                return;
+                if (filteredSuggestions[selectedIndex]) {
+                    handleSuggestionSelect(filteredSuggestions[selectedIndex]);
+                }
+                break;
+            case 'Escape':
+                setAutoCompleteVisible(false);
+                break;
+        }
+    };
+
+    // 스크롤 이벤트 핸들러 추가
+    useEffect(() => {
+        const textarea = editorRef.current;
+        if (!textarea) return;
+
+        const handleScroll = () => {
+            if (autoCompleteVisible && textarea) {
+                updateAutoCompletePosition(textarea);
             }
-        }
+        };
 
-        // 자동완성 툴팁을 숨기는 키 이벤트들
-        if (e.key === "Enter" || e.key === "Escape" || e.key === "Tab") {
-            setAutoCompleteVisible(false);
-        }
-
-        // 기존의 Enter 키 처리
-        if (e.key === "Enter") {
-            e.preventDefault();
-            const newLines = [...lines, {expression: "", result: ""}];
-            setLines(newLines);
-
-            setTimeout(() => {
-                inputRefs.current[index + 1]?.focus();
-            }, 0);
-        }
-    };
-
-    const handleResultClick = (result: string) => {
-        navigator.clipboard.writeText(result);
-    };
-
-    const handleSuggestionSelect = (suggestion: Suggestion, index: number) => {
-        const currentLine = lines[index].expression;
-        const cursorPosition = inputRefs.current[index]?.selectionStart || 0;
-
-        // 현재 라인에서 숫자 찾기 (전체 라인에서 검색)
-        const numberMatch = currentLine.match(/\d+/);
-        if (numberMatch && suggestion.type === 'unit') {
-            const numberStartIndex = numberMatch.index || 0;
-            const number = numberMatch[0];
-
-            // 숫자를 유지하고 ��� 뒤에 단위 추가
-            const newText = currentLine.slice(0, numberStartIndex) +
-                number + suggestion.text +
-                currentLine.slice(numberStartIndex + number.length);
-
-            const newLines = [...lines];
-            newLines[index].expression = newText;
-            setLines(newLines);
-
-            // 커서를 추가된 단위 뒤로 이동
-            setTimeout(() => {
-                const newPosition = numberStartIndex + number.length + suggestion.text.length;
-                inputRefs.current[index]?.setSelectionRange(newPosition, newPosition);
-                inputRefs.current[index]?.focus();
-            }, 0);
-        } else {
-            // 숫자가 없거나 단위가 아닌 경우 기존 로직
-            const newText = currentLine.slice(0, cursorPosition) +
-                suggestion.text +
-                currentLine.slice(cursorPosition);
-
-            const newLines = [...lines];
-            newLines[index].expression = newText;
-            setLines(newLines);
-
-            setTimeout(() => {
-                const newPosition = cursorPosition + suggestion.text.length;
-                inputRefs.current[index]?.setSelectionRange(newPosition, newPosition);
-                inputRefs.current[index]?.focus();
-            }, 0);
-        }
-
-        setAutoCompleteVisible(false);
-    };
-
-    // 입력창이 포커스를 잃었을 때도 툴팁을 숨김
-    const handleBlur = () => {
-        // 약간의 지연을 줘서 클릭 이벤트가 먼저 발생하도록 함
-        setTimeout(() => {
-            setAutoCompleteVisible(false);
-        }, 200);
-    };
-
-    const handleReset = () => {
-        // 모든 상태 초기화
-        setLines([{expression: "", result: ""}]);
-        setAutoCompleteVisible(false);
-        setSelectedIndex(0);
+        textarea.addEventListener('scroll', handleScroll);
+        window.addEventListener('scroll', handleScroll);
         
-        // Environment 초기화
-        environmentRef.current = new Environment();
-        interpreterRef.current = new Interpreter(environmentRef.current);
-        
-        // 첫 번째 입력창에 포커스
-        setTimeout(() => {
-            inputRefs.current[0]?.focus();
-        }, 0);
-    };
+        return () => {
+            textarea.removeEventListener('scroll', handleScroll);
+            window.removeEventListener('scroll', handleScroll);
+        };
+    }, [autoCompleteVisible, updateAutoCompletePosition]);
 
     return (
-        <div className="container">
-            {lines.map((line, index) => (
-                <div className="row" key={index}>
-                    <input
-                        className="input-box"
-                        value={line.expression}
-                        onChange={(e) => handleInputChange(index, e)}
-                        onKeyDown={(e) => handleKeyPress(e, index)}
-                        onBlur={handleBlur}
-                        autoFocus={index === lines.length - 1}
-                        placeholder={"Empty Line"}
-                    />
-                    <span className="result" onClick={() => handleResultClick(line.result)}>
-                        {line.result}
-                    </span>
+        <div className="editor-container">
+            <div className="editor-wrapper">
+                <textarea
+                    ref={editorRef}
+                    className="code-editor"
+                    value={code}
+                    onChange={handleInput}
+                    onKeyDown={handleKeyDown}
+                    onBlur={() => {
+                        setTimeout(() => setAutoCompleteVisible(false), 200);
+                    }}
+                    placeholder="계산식을 입력하세요..."
+                    spellCheck={false}
+                />
+                <div className="results-overlay">
+                    <div className="results-content">
+                        {results.map((result, index) => (
+                            <div
+                                key={index}
+                                className="result-line"
+                                onClick={() => {
+                                    if (result.result) {
+                                        navigator.clipboard.writeText(result.result);
+                                    }
+                                }}
+                            >
+                                {result.result}
+                            </div>
+                        ))}
+                    </div>
                 </div>
-            ))}
+            </div>
+            <FloatingButton onClick={handleReset}/>
             <AutoComplete
                 suggestions={filteredSuggestions}
-                onSelect={(suggestion) => handleSuggestionSelect(suggestion, lines.length - 1)}
+                onSelect={handleSuggestionSelect}
                 position={autoCompletePosition}
                 visible={autoCompleteVisible}
                 selectedIndex={selectedIndex}
             />
-            <FloatingButton onClick={handleReset} />
         </div>
     );
 }
