@@ -11,6 +11,7 @@ import {useRouter} from 'next/navigation';
 import {executeCode} from '@/app/hooks/useCodeExecution';
 import {calculateAutoCompletePosition, getCurrentWord} from '@/app/utils/editor';
 import {filterSuggestions, handleSuggestionSelect} from '@/app/utils/autoComplete';
+import {handleKeyboardEvent} from '@/app/utils/keyboardHandlers';
 
 const STORAGE_KEY = 'umni-v2-code';
 
@@ -110,28 +111,18 @@ export default function UmniRunV2() {
 
     // 키보드 이벤트 처리
     const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (!autoCompleteVisible) return;
+        const handled = handleKeyboardEvent({
+            key: e.key,
+            filteredSuggestions,
+            selectedIndex,
+            autoCompleteVisible,
+            onSelectIndex: setSelectedIndex,
+            onSelectSuggestion: onSuggestionSelect,
+            onHideAutoComplete: () => setAutoCompleteVisible(false)
+        });
 
-        switch (e.key) {
-            case 'ArrowDown':
-                e.preventDefault();
-                setSelectedIndex(prev =>
-                    prev < filteredSuggestions.length - 1 ? prev + 1 : prev
-                );
-                break;
-            case 'ArrowUp':
-                e.preventDefault();
-                setSelectedIndex(prev => prev > 0 ? prev - 1 : prev);
-                break;
-            case 'Tab':
-                e.preventDefault();
-                if (filteredSuggestions[selectedIndex]) {
-                    onSuggestionSelect(filteredSuggestions[selectedIndex]);
-                }
-                break;
-            case 'Escape':
-                setAutoCompleteVisible(false);
-                break;
+        if (handled) {
+            e.preventDefault();
         }
     };
 
