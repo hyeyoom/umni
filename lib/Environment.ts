@@ -94,23 +94,7 @@ export class Environment {
                 'type',
                 (args: ComputedValue[]) => {
                     if (args.length !== 1) throw new Error('type function requires one argument');
-                    const arg = args[0];
-                    if (arg instanceof StringValue) {
-                        return new StringValue("string");
-                    }
-                    if (arg instanceof LogicalValue) {
-                        return new StringValue("boolean");
-                    }
-                    if (arg instanceof RealValue) {
-                        return new StringValue("double");
-                    }
-                    if (arg instanceof NaturalValue) {
-                        return new StringValue("integer");
-                    }
-                    if (arg instanceof WithUnitValue) {
-                        return new StringValue("double with unit");
-                    }
-                    throw new Error('Unknown type');
+                    return new StringValue(args[0].getType());
                 },
             ],
         ]);
