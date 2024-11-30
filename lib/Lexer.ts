@@ -19,10 +19,16 @@ import {
 } from './tokens';
 
 export class Lexer {
-    private position = 0;
+    private readonly input: string;
+    private position: number = 0;
     private tokens: Token[] = [];
 
-    constructor(private input: string) {
+    constructor(input: string) {
+        this.input = input;
+    }
+
+    private isDigit(char: string): boolean {
+        return /[0-9]/.test(char);
     }
 
     tokenize(): Token[] {
@@ -48,40 +54,38 @@ export class Lexer {
 
     private tokenizeNumber() {
         const start = this.position;
-        let dotCount = 0;
+        let hasDot = false;
 
-        while (
-            this.position < this.input.length &&
-            (/\d/.test(this.input[this.position]) || this.input[this.position] === '.')
-            ) {
-            if (this.input[this.position] === '.') {
-                dotCount++;
+        while (this.position < this.input.length) {
+            const char = this.input[this.position];
+            if (char === '.') {
+                if (hasDot) {
+                    throw new Error('Invalid number format');
+                }
+                hasDot = true;
+            } else if (!this.isDigit(char)) {
+                break;
             }
             this.position++;
         }
 
-        if (dotCount > 1) {
-            throw new Error('Invalid number format: too many dots');
+        const numberStr = this.input.substring(start, this.position);
+
+        // 단위 확인
+        let unit = '';
+        while (this.position < this.input.length && this.isIdentifierCharacter(this.input[this.position])) {
+            unit += this.input[this.position];
+            this.position++;
         }
 
-        const numberText = this.input.substring(start, this.position);
-        this.skipWhitespace();
-
-        let unitText: string | null = null;
-        if (this.position < this.input.length && /[a-zA-Z]/.test(this.input[this.position])) {
-            const unitStart = this.position;
-            while (this.position < this.input.length && /[a-zA-Z]/.test(this.input[this.position])) {
-                this.position++;
+        if (unit) {
+            if (!UnitToken.SUPPORT_UNITS.has(unit)) {
+                throw new Error('Unsupported unit');
             }
-            unitText = this.input.substring(unitStart, this.position);
+            this.tokens.push(new WithUnitToken(Number(numberStr), unit));
+        } else {
+            this.tokens.push(hasDot ? new RealToken(Number(numberStr)) : new NaturalToken(Number(numberStr)));
         }
-
-        const numberValue = parseFloat(numberText);
-        if (isNaN(numberValue)) {
-            throw new Error(`Invalid number format: ${numberText}`);
-        }
-
-        this.addUnitOrOperator(numberValue, unitText, dotCount);
     }
 
     private addNumberToken(numberValue: number, dotCount: number): Token {

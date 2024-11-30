@@ -121,24 +121,24 @@ export class Interpreter {
 
     private interpretVariable(node: VariableNode): ComputedValue {
         const name = node.name;
-        
+
         // 먼저 상수인지 확인
         if (this.environment.constants.has(name)) {
             return this.environment.constants.get(name)!;
         }
-        
+
         // 변수인지 확인
         if (this.environment.variables.has(name)) {
             return this.environment.variables.get(name)!;
         }
-        
+
         throw new Error(`Undefined variable '${name}'`);
     }
 
     private interpretAssignment(node: AssignmentNode): ComputedValue {
         if (node.left instanceof VariableNode) {
             const variableName = node.left.name;
-            
+
             // 상수인지 확인
             if (this.environment.constants.has(variableName)) {
                 throw new Error(`Cannot assign to constant '${variableName}'`);
@@ -174,6 +174,9 @@ export class Interpreter {
             case '*':
                 return this.handleMultiplication(left, right);
             case '/':
+                if ((right instanceof RealValue || right instanceof NaturalValue) && right.value === 0) {
+                    throw new Error('Division by zero');
+                }
                 return this.handleDivision(left, right);
             case '>':
             case '>=':

@@ -8,14 +8,14 @@ import {
     NaturalToken,
     RealToken,
     RightParenToken,
-    SemanticOperatorToken,
     SemanticOperatorSymbol,
+    SemanticOperatorToken,
     StringLiteralToken,
     SymbolicOperatorToken,
     UnitToken,
     WithUnitToken
 } from '@/lib/tokens';
-import { Lexer } from '@/lib/Lexer';
+import {Lexer} from '@/lib/Lexer';
 
 describe('Lexer', () => {
     describe('숫자 토큰화', () => {
@@ -42,12 +42,12 @@ describe('Lexer', () => {
     describe('단위 토큰화', () => {
         it('단위가 있는 숫자를 토큰화할 수 있다', () => {
             const testCases = [
-                { input: '5km', value: 5, unit: 'km' },
-                { input: '3.14m', value: 3.14, unit: 'm' },
-                { input: '1024kb', value: 1024, unit: 'kb' },
+                {input: '5km', value: 5, unit: 'km'},
+                {input: '3.14m', value: 3.14, unit: 'm'},
+                {input: '1024kb', value: 1024, unit: 'kb'},
             ];
 
-            testCases.forEach(({ input, value, unit }) => {
+            testCases.forEach(({input, value, unit}) => {
                 const lexer = new Lexer(input);
                 const tokens = lexer.tokenize();
                 expect(tokens[0]).toBeInstanceOf(WithUnitToken);
@@ -180,6 +180,27 @@ describe('Lexer', () => {
             const lexer = new Lexer(input);
             const tokens = lexer.tokenize();
             expect(tokens[tokens.length - 1]).toBeInstanceOf(EOFToken);
+        });
+    });
+
+    describe('에러 처리', () => {
+        it('종료되지 않은 문자열에 대해 구체적인 에러를 발생시킨다', () => {
+            expect(() => new Lexer('"Hello').tokenize())
+                .toThrow('Unterminated string literal');
+            expect(() => new Lexer('\'World').tokenize())
+                .toThrow('Unterminated string literal');
+        });
+
+        it('잘못된 숫자 형식에 대해 구체적인 에러를 발생시킨다', () => {
+            expect(() => new Lexer('3.14.15').tokenize())
+                .toThrow('Invalid number format');
+            expect(() => new Lexer('3..14').tokenize())
+                .toThrow('Invalid number format');
+        });
+
+        it('지원하지 않는 단위에 대해 구체적인 에러를 발생시킨다', () => {
+            expect(() => new Lexer('5xyz').tokenize())
+                .toThrow('Unsupported unit');
         });
     });
 });
