@@ -3,13 +3,12 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {Environment} from '@/lib/Environment';
 import {Interpreter} from '@/lib/Interpreter';
-import {Lexer} from '@/lib/Lexer';
-import {Parser} from '@/lib/Parser';
 import FloatingButton from "@/app/components/FloatingButton";
 import AutoComplete from "@/app/components/AutoComplete";
-import {Suggestion} from '../types/suggestion';
+import {Suggestion} from "@/app/types/suggestion";
 import '../globals.css';
 import {useRouter} from 'next/navigation';
+import {executeCode} from '@/app/hooks/useCodeExecution';
 
 const STORAGE_KEY = 'umni-v2-code';
 
@@ -54,26 +53,13 @@ export default function UmniRunV2() {
         localStorage.setItem(STORAGE_KEY, code);
     }, [code]);
 
+    // 코드 실행 효과
     useEffect(() => {
         const lines = code.split('\n');
-        const newResults = lines.map((line, index) => {
-            if (!line.trim()) return {line: index, result: ''};
-
-            try {
-                const lexer = new Lexer(line);
-                const tokens = lexer.tokenize();
-                const parser = new Parser(tokens);
-                const ast = parser.parse();
-                const result = interpreterRef.current.interpret(ast);
-                return {line: index, result: String(result)};
-            } catch (e: unknown) {
-                console.error(e)
-                if (e instanceof Error) {
-                    return {line: index, result: ''};
-                }
-                return {line: index, result: ''};
-            }
-        });
+        const newResults = lines.map((line, index) => ({
+            line: index,
+            result: interpreterRef.current ? executeCode(line, interpreterRef.current) : ''
+        }));
 
         setResults(newResults);
     }, [code]);
@@ -107,7 +93,7 @@ export default function UmniRunV2() {
         return match ? match[0] : '';
     };
 
-    // 현재 환경의 변수와 함수를 포함한 전체 제안 ��록 생성
+    // 현재 환경의 변수와 함수를 포함한 전체 제안 록 생성
     const getAllSuggestions = (): Suggestion[] => {
         const suggestions = [...STATIC_SUGGESTIONS];
 
