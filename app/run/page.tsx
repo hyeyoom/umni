@@ -3,7 +3,9 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {Environment} from '@/lib/Environment';
 import {Interpreter} from '@/lib/Interpreter';
-import FloatingButton from "@/app/components/FloatingButton";
+import {EditorArea} from '@/app/components/EditorArea';
+import {ResultsOverlay} from '@/app/components/ResultsOverlay';
+import {FloatingButtons} from '@/app/components/FloatingButtons';
 import AutoComplete from "@/app/components/AutoComplete";
 import {Suggestion} from "@/app/types/suggestion";
 import '../globals.css';
@@ -149,49 +151,24 @@ export default function UmniRunV2() {
     return (
         <div className="editor-container">
             <div className="editor-wrapper">
-                <textarea
-                    ref={editorRef}
-                    className="code-editor"
-                    value={code}
-                    onChange={handleInput}
+                <EditorArea
+                    editorRef={editorRef}
+                    code={code}
+                    onInput={handleInput}
                     onKeyDown={handleKeyDown}
                     onBlur={() => {
                         setTimeout(() => setAutoCompleteVisible(false), 200);
                     }}
-                    placeholder="계산식을 입력하세요..."
-                    spellCheck={false}
                 />
-                <div className="results-overlay">
-                    <div className="results-content">
-                        {results.map((result, index) => (
-                            <div
-                                key={index}
-                                className="result-line"
-                                onClick={() => {
-                                    if (result.result) {
-                                        navigator.clipboard.writeText(result.result);
-                                    }
-                                }}
-                            >
-                                {result.result}
-                            </div>
-                        ))}
-                    </div>
-                </div>
+                <ResultsOverlay results={results}/>
             </div>
-            <div className="floating-buttons">
-                <FloatingButton
-                    type="clear"
-                    onClick={() => {
-                        setCode('');
-                        setResults([]);
-                    }}
-                />
-                <FloatingButton
-                    type="help"
-                    onClick={() => router.push('/spec')}
-                />
-            </div>
+            <FloatingButtons
+                onClear={() => {
+                    setCode('');
+                    setResults([]);
+                }}
+                onHelp={() => router.push('/spec')}
+            />
             <AutoComplete
                 suggestions={filteredSuggestions}
                 onSelect={onSuggestionSelect}
