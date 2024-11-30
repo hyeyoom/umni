@@ -184,4 +184,13 @@ describe('Interpreter', () => {
             expect(() => evaluate('fn pi() = 3.14')).toThrow("Cannot declare constant 'pi' as function");
         });
     });
+
+    describe('삼각함수', () => {
+        it('기본적인 삼각함수 값을 계산할 수 있다', () => {
+            expect(evaluate('sin(pi)')).toEqual(new RealValue(0));
+            expect(evaluate('sin(pi/2)')).toEqual(new RealValue(1));
+            expect(evaluate('cos(pi)')).toEqual(new RealValue(-1));
+            expect(evaluate('cos(pi/2)')).toEqual(new RealValue(0));
+        });
+    });
 });

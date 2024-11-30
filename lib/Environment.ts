@@ -15,6 +15,8 @@ export class Environment {
     constants: Map<string, ComputedValue>;
     builtInFunctions: Map<string, (args: ComputedValue[]) => ComputedValue>;
 
+    private static readonly EPSILON = 1e-10;
+
     constructor(options: EnvironmentOptions = {}) {
         this.variables = options.variables ?? new Map();
         this.functions = options.functions ?? new Map();
@@ -37,22 +39,16 @@ export class Environment {
                 'sin',
                 (args: ComputedValue[]) => {
                     if (args.length !== 1) throw new Error('sin function requires one argument');
-                    const arg = args[0];
-                    if (arg instanceof RealValue || arg instanceof NaturalValue) {
-                        return new RealValue(Math.sin(arg.value));
-                    }
-                    throw new Error('Invalid argument for sin function');
+                    const arg = this.getNumberValue(args[0]);
+                    return new RealValue(Environment.normalizeZero(Math.sin(arg)));
                 },
             ],
             [
                 'cos',
                 (args: ComputedValue[]) => {
                     if (args.length !== 1) throw new Error('cos function requires one argument');
-                    const arg = args[0];
-                    if (arg instanceof RealValue || arg instanceof NaturalValue) {
-                        return new RealValue(Math.cos(arg.value));
-                    }
-                    throw new Error('Invalid argument for cos function');
+                    const arg = this.getNumberValue(args[0]);
+                    return new RealValue(Environment.normalizeZero(Math.cos(arg)));
                 },
             ],
             [
@@ -98,5 +94,19 @@ export class Environment {
                 },
             ],
         ]);
+    }
+
+    private getNumberValue(value: ComputedValue): number {
+        if (value instanceof RealValue || value instanceof NaturalValue) {
+            return value.value;
+        }
+        if (value instanceof WithUnitValue) {
+            return value.value;
+        }
+        throw new Error('Expected a number value');
+    }
+
+    private static normalizeZero(value: number): number {
+        return Math.abs(value) < Environment.EPSILON ? 0 : value;
     }
 }
