@@ -9,21 +9,9 @@ import {Suggestion} from "@/app/types/suggestion";
 import '../globals.css';
 import {useRouter} from 'next/navigation';
 import {executeCode} from '@/app/hooks/useCodeExecution';
+import {getAllSuggestions} from '@/app/utils/suggestions';
 
 const STORAGE_KEY = 'umni-v2-code';
-
-const STATIC_SUGGESTIONS: Suggestion[] = [
-    {text: 'fn', type: 'keyword', description: '함수 선언'},
-    {text: 'to', type: 'keyword', description: '단위 변환'},
-    {text: 'times', type: 'keyword', description: '반복'},
-    {text: 'km', type: 'unit', description: '킬로미터'},
-    {text: 'm', type: 'unit', description: '미터'},
-    {text: 'cm', type: 'unit', description: '센티미터'},
-    {text: 'mm', type: 'unit', description: '밀리미터'},
-    {text: 'kb', type: 'unit', description: '킬로바이트'},
-    {text: 'mb', type: 'unit', description: '메가바이트'},
-    {text: 'gb', type: 'unit', description: '기가바이트'},
-];
 
 export default function UmniRunV2() {
     const [code, setCode] = useState<string>('');
@@ -93,50 +81,6 @@ export default function UmniRunV2() {
         return match ? match[0] : '';
     };
 
-    // 현재 환경의 변수와 함수를 포함한 전체 제안 록 생성
-    const getAllSuggestions = (): Suggestion[] => {
-        const suggestions = [...STATIC_SUGGESTIONS];
-
-        // 변수 추가
-        environmentRef.current.variables.forEach((value, name) => {
-            suggestions.push({
-                text: name,
-                type: 'variable',
-                description: `사용자 정의 변수 (${value.toString()})`
-            });
-        });
-
-        // 상수 추가
-        environmentRef.current.constants.forEach((value, name) => {
-            suggestions.push({
-                text: name,
-                type: 'constant',
-                description: ` 상수 (${value.toString()})`
-            });
-        });
-
-        // 사용자 정의 함수 추가
-        environmentRef.current.functions.forEach((func, name) => {
-            const params = func.parameters.join(', ');
-            suggestions.push({
-                text: name,
-                type: 'function',
-                description: `함수 (${params})`
-            });
-        });
-
-        // 내장 함수 추가
-        environmentRef.current.builtInFunctions.forEach((_, name) => {
-            suggestions.push({
-                text: name,
-                type: 'function',
-                description: '내장 함수'
-            });
-        });
-
-        return suggestions;
-    };
-
     // 입력 처리 및 자동완성 필터링
     const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setCode(e.target.value);
@@ -146,14 +90,14 @@ export default function UmniRunV2() {
         if (currentWord.length > 0) {
             let filtered;
             if (/^\d+$/.test(currentWord)) {
-                filtered = getAllSuggestions().filter(s => s.type === 'unit');
+                filtered = getAllSuggestions(environmentRef.current).filter(s => s.type === 'unit');
             } else if (/^\d+[a-zA-Z]+$/.test(currentWord)) {
                 const unitPart = currentWord.match(/[a-zA-Z]+$/)?.[0] || '';
-                filtered = getAllSuggestions().filter(s =>
+                filtered = getAllSuggestions(environmentRef.current).filter(s =>
                     s.type === 'unit' && s.text.toLowerCase().startsWith(unitPart.toLowerCase())
                 );
             } else {
-                filtered = getAllSuggestions().filter(s =>
+                filtered = getAllSuggestions(environmentRef.current).filter(s =>
                     s.text.toLowerCase().startsWith(currentWord.toLowerCase())
                 );
             }
