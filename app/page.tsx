@@ -148,13 +148,16 @@ export default function Home() {
     }, [currentLine]);
 
     return (
-        <main className="landing-page">
-            <div className="hero-section">
+        <div className="landing-page">
+            <section className="hero-section">
                 <h1 className="title">U M N I</h1>
                 <p className="subtitle">Smartest Programmable Calculator</p>
-            </div>
-
-            <div className="demo-section">
+                <div className="nav-links">
+                    <Link href="/run" className="nav-link">시작하기</Link>
+                    <Link href="/spec" className="nav-link">문서</Link>
+                </div>
+            </section>
+            <section className="demo-section">
                 <div className={`calculator-preview ${isFading ? 'fade-out' : 'fade-in'}`}>
                     {displayLines.map((line, index) => (
                         <div className="row" key={index}>
@@ -172,11 +175,7 @@ export default function Home() {
                         </div>
                     ))}
                 </div>
-            </div>
-
-            <Link href="/run" className="start-button">
-                시작하기
-            </Link>
-        </main>
+            </section>
+        </div>
     );
 }

@@ -5,10 +5,11 @@ import {Environment} from '@/lib/Environment';
 import {Interpreter} from '@/lib/Interpreter';
 import {Lexer} from '@/lib/Lexer';
 import {Parser} from '@/lib/Parser';
-import FloatingButton from '../components/FloatingButton';
-import AutoComplete from '../components/AutoComplete';
+import FloatingButton from "@/app/components/FloatingButton";
+import AutoComplete from "@/app/components/AutoComplete";
 import {Suggestion} from '../types/suggestion';
 import '../globals.css';
+import {useRouter} from 'next/navigation';
 
 const STORAGE_KEY = 'umni-v2-code';
 
@@ -37,6 +38,8 @@ export default function UmniRunV2() {
     const [autoCompletePosition, setAutoCompletePosition] = useState({top: 0, left: 0});
     const [filteredSuggestions, setFilteredSuggestions] = useState<Suggestion[]>([]);
     const [selectedIndex, setSelectedIndex] = useState(0);
+
+    const router = useRouter();
 
     // 초기 로드 시 localStorage에서 데이터 가져오기
     useEffect(() => {
@@ -91,15 +94,6 @@ export default function UmniRunV2() {
         return () => textarea.removeEventListener('scroll', handleScroll);
     }, []);
 
-    const handleReset = () => {
-        setCode('');
-        setResults([]);
-        localStorage.removeItem(STORAGE_KEY);
-        environmentRef.current = new Environment();
-        interpreterRef.current = new Interpreter(environmentRef.current);
-        editorRef.current?.focus();
-    };
-
     // 현재 커서 위치의 단어 추출
     const getCurrentWord = () => {
         if (!editorRef.current) return '';
@@ -113,7 +107,7 @@ export default function UmniRunV2() {
         return match ? match[0] : '';
     };
 
-    // 현재 환경의 변수와 함수를 포함한 전체 제안 목록 생성
+    // 현재 환경의 변수와 함수를 포함한 전체 제안 ��록 생성
     const getAllSuggestions = (): Suggestion[] => {
         const suggestions = [...STATIC_SUGGESTIONS];
 
@@ -328,7 +322,19 @@ export default function UmniRunV2() {
                     </div>
                 </div>
             </div>
-            <FloatingButton onClick={handleReset}/>
+            <div className="floating-buttons">
+                <FloatingButton
+                    type="clear"
+                    onClick={() => {
+                        setCode('');
+                        setResults([]);
+                    }}
+                />
+                <FloatingButton
+                    type="help"
+                    onClick={() => router.push('/spec')}
+                />
+            </div>
             <AutoComplete
                 suggestions={filteredSuggestions}
                 onSelect={handleSuggestionSelect}
