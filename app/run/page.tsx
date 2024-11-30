@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {Environment} from '@/lib/Environment';
 import {Interpreter} from '@/lib/Interpreter';
 import FloatingButton from "@/app/components/FloatingButton";
@@ -10,6 +10,7 @@ import '../globals.css';
 import {useRouter} from 'next/navigation';
 import {executeCode} from '@/app/hooks/useCodeExecution';
 import {getAllSuggestions} from '@/app/utils/suggestions';
+import {calculateAutoCompletePosition, getCurrentWord} from '@/app/utils/editor';
 
 const STORAGE_KEY = 'umni-v2-code';
 
@@ -68,24 +69,17 @@ export default function UmniRunV2() {
         return () => textarea.removeEventListener('scroll', handleScroll);
     }, []);
 
-    // 현재 커서 위치의 단어 추출
-    const getCurrentWord = () => {
-        if (!editorRef.current) return '';
-
-        const cursorPosition = editorRef.current.selectionStart;
-        const text = editorRef.current.value;
-        const textBeforeCursor = text.slice(0, cursorPosition);
-
-        // 숫자 뒤에 오는 단어도 감지하도록 정규식 수정
-        const match = textBeforeCursor.match(/[a-zA-Z0-9_가-힣]+$/);
-        return match ? match[0] : '';
-    };
+    const updateAutoCompletePosition = useCallback((target: HTMLTextAreaElement) => {
+        const currentWord = getCurrentWord(editorRef.current);
+        const position = calculateAutoCompletePosition(target, currentWord);
+        setAutoCompletePosition(position);
+    }, []);
 
     // 입력 처리 및 자동완성 필터링
     const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setCode(e.target.value);
 
-        const currentWord = getCurrentWord();
+        const currentWord = getCurrentWord(editorRef.current);
 
         if (currentWord.length > 0) {
             let filtered;
@@ -116,37 +110,13 @@ export default function UmniRunV2() {
         }
     };
 
-    // 자동완성 위치 업데이트
-    const updateAutoCompletePosition = (target: HTMLTextAreaElement) => {
-        const rect = target.getBoundingClientRect();
-        const currentWord = getCurrentWord();
-        const text = target.value;
-        const cursorPosition = target.selectionStart || 0;
-        const textBeforeCursor = text.slice(0, cursorPosition);
-        const lines = textBeforeCursor.split('\n');
-        const currentLineNumber = lines.length - 1;
-        const currentLine = lines[currentLineNumber];
-
-        const lineHeight = 1.5 * 2.4 * 16; // fontSize * lineHeight * 16(rem to px)
-        const charWidth = 14.4; // fontSize * 0.6 * 16(rem to px)
-
-        // 스크롤 위치를 고려한 위치 계산
-        const top = rect.top + (currentLineNumber * lineHeight) + lineHeight - target.scrollTop;
-        const left = rect.left + (currentLine.length - currentWord.length) * charWidth;
-
-        setAutoCompletePosition({
-            top: top + window.scrollY, // 페이지 스크롤 위치 추가
-            left: left
-        });
-    };
-
     // 자동완성 선택 처리
     const handleSuggestionSelect = (suggestion: Suggestion) => {
         if (!editorRef.current) return;
 
         const cursorPos = editorRef.current.selectionStart;
         const text = editorRef.current.value;
-        const currentWord = getCurrentWord();
+        const currentWord = getCurrentWord(editorRef.current);
 
         // 숫자 다음에 단위가 오는 경우를 처리
         const beforeCursor = text.slice(0, cursorPos);
