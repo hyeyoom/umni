@@ -38,6 +38,11 @@ const DEMO_EXPRESSIONS = [
         {expression: "ratio = width / height"},
         {expression: "width = ratio * height"},
     ],
+    [
+        {expression: "fn 경계값(x) = x > 10 ? '초과' : '미만'"},
+        {expression: "경계값(10)"},
+        {expression: "경계값(11)"},
+    ]
 ];
 
 export default function Home() {
