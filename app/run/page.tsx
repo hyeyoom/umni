@@ -9,8 +9,8 @@ import {Suggestion} from "@/app/types/suggestion";
 import '../globals.css';
 import {useRouter} from 'next/navigation';
 import {executeCode} from '@/app/hooks/useCodeExecution';
-import {getAllSuggestions} from '@/app/utils/suggestions';
 import {calculateAutoCompletePosition, getCurrentWord} from '@/app/utils/editor';
+import {filterSuggestions, handleSuggestionSelect} from '@/app/utils/autoComplete';
 
 const STORAGE_KEY = 'umni-v2-code';
 
@@ -80,22 +80,8 @@ export default function UmniRunV2() {
         setCode(e.target.value);
 
         const currentWord = getCurrentWord(editorRef.current);
-
         if (currentWord.length > 0) {
-            let filtered;
-            if (/^\d+$/.test(currentWord)) {
-                filtered = getAllSuggestions(environmentRef.current).filter(s => s.type === 'unit');
-            } else if (/^\d+[a-zA-Z]+$/.test(currentWord)) {
-                const unitPart = currentWord.match(/[a-zA-Z]+$/)?.[0] || '';
-                filtered = getAllSuggestions(environmentRef.current).filter(s =>
-                    s.type === 'unit' && s.text.toLowerCase().startsWith(unitPart.toLowerCase())
-                );
-            } else {
-                filtered = getAllSuggestions(environmentRef.current).filter(s =>
-                    s.text.toLowerCase().startsWith(currentWord.toLowerCase())
-                );
-            }
-
+            const filtered = filterSuggestions(currentWord, environmentRef.current);
             setFilteredSuggestions(filtered);
 
             if (filtered.length > 0) {
@@ -110,32 +96,12 @@ export default function UmniRunV2() {
         }
     };
 
-    // 자동완성 선택 처리
-    const handleSuggestionSelect = (suggestion: Suggestion) => {
+    const onSuggestionSelect = (suggestion: Suggestion) => {
         if (!editorRef.current) return;
 
         const cursorPos = editorRef.current.selectionStart;
-        const text = editorRef.current.value;
         const currentWord = getCurrentWord(editorRef.current);
-
-        // 숫자 다음에 단위가 오는 경우를 처리
-        const beforeCursor = text.slice(0, cursorPos);
-        const afterCursor = text.slice(cursorPos);
-        let newText;
-
-        if (/^\d+$/.test(currentWord)) {
-            // 숫자만 있는 경우, 숫자를 유지하고 단위를 추가
-            newText = beforeCursor + suggestion.text + afterCursor;
-        } else if (/^\d+[a-zA-Z]+$/.test(currentWord)) {
-            // 숫자+단위가 있는 경우, 숫자는 유지하고 단위만 교체
-            const numberPart = currentWord.match(/^\d+/)?.[0] || '';
-            const wordStart = cursorPos - currentWord.length;
-            newText = text.slice(0, wordStart) + numberPart + suggestion.text + afterCursor;
-        } else {
-            // 일반적인 경우
-            const wordStart = cursorPos - currentWord.length;
-            newText = text.slice(0, wordStart) + suggestion.text + afterCursor;
-        }
+        const newText = handleSuggestionSelect(suggestion, code, cursorPos, currentWord);
 
         setCode(newText);
         setAutoCompleteVisible(false);
@@ -160,7 +126,7 @@ export default function UmniRunV2() {
             case 'Tab':
                 e.preventDefault();
                 if (filteredSuggestions[selectedIndex]) {
-                    handleSuggestionSelect(filteredSuggestions[selectedIndex]);
+                    onSuggestionSelect(filteredSuggestions[selectedIndex]);
                 }
                 break;
             case 'Escape':
@@ -237,7 +203,7 @@ export default function UmniRunV2() {
             </div>
             <AutoComplete
                 suggestions={filteredSuggestions}
-                onSelect={handleSuggestionSelect}
+                onSelect={onSuggestionSelect}
                 position={autoCompletePosition}
                 visible={autoCompleteVisible}
                 selectedIndex={selectedIndex}
