@@ -8,6 +8,7 @@ import {
     NaturalNode,
     RealNode,
     StringLiteralNode,
+    TernaryOperationNode,
     UnaryOperationNode,
     UnitConversionNode,
     VariableNode,
@@ -92,6 +93,16 @@ export class Interpreter {
             } else {
                 throw new Error('Cannot convert non-numeric value');
             }
+        } else if (node instanceof TernaryOperationNode) {
+            const condition = this.interpret(node.condition);
+
+            if (!(condition instanceof LogicalValue)) {
+                throw new Error('Condition must evaluate to a boolean value');
+            }
+
+            return condition.value ?
+                this.interpret(node.trueExpression) :
+                this.interpret(node.falseExpression);
         } else {
             throw new Error('Unknown AST Node');
         }
@@ -215,13 +226,20 @@ export class Interpreter {
             }
 
             switch (operator) {
-                case '>': return new LogicalValue(leftValue > rightValue);
-                case '>=': return new LogicalValue(leftValue >= rightValue);
-                case '<': return new LogicalValue(leftValue < rightValue);
-                case '<=': return new LogicalValue(leftValue <= rightValue);
-                case '==': return new LogicalValue(leftValue === rightValue);
-                case '!=': return new LogicalValue(leftValue !== rightValue);
-                default: throw new Error(`Unknown comparison operator: ${operator}`);
+                case '>':
+                    return new LogicalValue(leftValue > rightValue);
+                case '>=':
+                    return new LogicalValue(leftValue >= rightValue);
+                case '<':
+                    return new LogicalValue(leftValue < rightValue);
+                case '<=':
+                    return new LogicalValue(leftValue <= rightValue);
+                case '==':
+                    return new LogicalValue(leftValue === rightValue);
+                case '!=':
+                    return new LogicalValue(leftValue !== rightValue);
+                default:
+                    throw new Error(`Unknown comparison operator: ${operator}`);
             }
         }
 
@@ -229,13 +247,20 @@ export class Interpreter {
         const rightValue = (right as RealValue | NaturalValue).value;
 
         switch (operator) {
-            case '>': return new LogicalValue(leftValue > rightValue);
-            case '>=': return new LogicalValue(leftValue >= rightValue);
-            case '<': return new LogicalValue(leftValue < rightValue);
-            case '<=': return new LogicalValue(leftValue <= rightValue);
-            case '==': return new LogicalValue(leftValue === rightValue);
-            case '!=': return new LogicalValue(leftValue !== rightValue);
-            default: throw new Error(`Unknown comparison operator: ${operator}`);
+            case '>':
+                return new LogicalValue(leftValue > rightValue);
+            case '>=':
+                return new LogicalValue(leftValue >= rightValue);
+            case '<':
+                return new LogicalValue(leftValue < rightValue);
+            case '<=':
+                return new LogicalValue(leftValue <= rightValue);
+            case '==':
+                return new LogicalValue(leftValue === rightValue);
+            case '!=':
+                return new LogicalValue(leftValue !== rightValue);
+            default:
+                throw new Error(`Unknown comparison operator: ${operator}`);
         }
     }
 

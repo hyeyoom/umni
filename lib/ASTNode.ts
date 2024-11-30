@@ -67,3 +67,13 @@ export class UnitConversionNode extends ASTNode {
         super();
     }
 }
+
+export class TernaryOperationNode extends ASTNode {
+    constructor(
+        public condition: ASTNode,
+        public trueExpression: ASTNode,
+        public falseExpression: ASTNode
+    ) {
+        super();
+    }
+}

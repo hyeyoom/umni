@@ -203,4 +203,19 @@ describe('Lexer', () => {
                 .toThrow('Unsupported unit');
         });
     });
+
+    describe('삼항 연산자 토큰화', () => {
+        it('삼항 연산자 기호를 토큰화할 수 있다', () => {
+            const lexer = new Lexer('x > 10 ? 1 : 0');
+            const tokens = lexer.tokenize();
+            
+            const symbols = tokens
+                .filter(t => t instanceof SymbolicOperatorToken)
+                .map(t => (t as SymbolicOperatorToken).symbol);
+                
+            expect(symbols).toContain('>');
+            expect(symbols).toContain('?');
+            expect(symbols).toContain(':');
+        });
+    });
 });

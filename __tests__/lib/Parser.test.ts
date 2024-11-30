@@ -8,6 +8,7 @@ import {
     NaturalNode,
     RealNode,
     StringLiteralNode,
+    TernaryOperationNode,
     UnaryOperationNode,
     UnitConversionNode,
     VariableNode,
@@ -194,6 +195,27 @@ describe('Parser', () => {
 
         it('괄호를 닫지 않는 경우 에러를 발생시킨다', () => {
             expect(() => parse('(1 + 2')).toThrow();
+        });
+    });
+
+    describe('삼항 연산자 파싱', () => {
+        it('기본적인 삼항 연산을 파싱할 수 있다', () => {
+            const ast = parse('x > 10 ? 1 : 0');
+            expect(ast).toBeInstanceOf(TernaryOperationNode);
+
+            const ternaryNode = ast as TernaryOperationNode;
+            expect(ternaryNode.condition).toBeInstanceOf(BinaryOperationNode);
+            expect(ternaryNode.trueExpression).toBeInstanceOf(NaturalNode);
+            expect(ternaryNode.falseExpression).toBeInstanceOf(NaturalNode);
+        });
+
+        it('중첩된 삼항 연산을 파싱할 수 있다', () => {
+            const ast = parse('x > 20 ? y > 10 ? 1 : 2 : 3');
+            expect(ast).toBeInstanceOf(TernaryOperationNode);
+        });
+
+        it('잘못된 삼항 연산 구문에서 에러를 발생시킨다', () => {
+            expect(() => parse('x > 10 ? 1')).toThrow("Expected ':' in ternary operation");
         });
     });
 });

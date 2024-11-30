@@ -25,6 +25,7 @@ import {
     NaturalNode,
     RealNode,
     StringLiteralNode,
+    TernaryOperationNode,
     UnaryOperationNode,
     UnitConversionNode,
     VariableNode,
@@ -63,7 +64,25 @@ export class Parser {
     }
 
     private parseExpression(): ASTNode {
-        return this.parseComparison();
+        const node = this.parseComparison();
+
+        if (this.currentToken() instanceof SymbolicOperatorToken &&
+            (this.currentToken() as SymbolicOperatorToken).symbol === '?') {
+            this.consume(); // ? 토큰 소비
+            const trueExpression = this.parseExpression();
+
+            if (!(this.currentToken() instanceof SymbolicOperatorToken) ||
+                (this.currentToken() as SymbolicOperatorToken).symbol !== ':') {
+                throw new Error("Expected ':' in ternary operation");
+            }
+
+            this.consume(); // : 토큰 소비
+            const falseExpression = this.parseExpression();
+
+            return new TernaryOperationNode(node, trueExpression, falseExpression);
+        }
+
+        return node;
     }
 
     private parseComparison(): ASTNode {

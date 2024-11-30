@@ -171,36 +171,53 @@ export class Lexer {
     private tokenizeOperatorOrPunctuation() {
         const currentChar = this.input[this.position];
 
-        if (currentChar === '=') {
-            if (this.input[this.position + 1] === '=') {
-                this.tokens.push(new SymbolicOperatorToken('=='));
-                this.position += 2;
-            } else {
-                this.tokens.push(new AssignToken());
-                this.position++;
-            }
-        } else if (currentChar === '(') {
-            this.tokens.push(new LeftParenToken());
-            this.position++;
-        } else if (currentChar === ')') {
-            this.tokens.push(new RightParenToken());
-            this.position++;
-        } else if (currentChar === ',') {
-            this.tokens.push(new CommaToken());
-            this.position++;
-        } else if ('><!'.includes(currentChar)) {
-            if (this.input[this.position + 1] === '=') {
-                this.tokens.push(new SymbolicOperatorToken(currentChar + '='));
-                this.position += 2;
-            } else {
+        switch (currentChar) {
+            case '?':
+            case ':':
                 this.tokens.push(new SymbolicOperatorToken(currentChar));
                 this.position++;
-            }
-        } else if ('+-*/'.includes(currentChar)) {
-            this.tokens.push(new SymbolicOperatorToken(currentChar));
-            this.position++;
-        } else {
-            throw new Error(`Unknown character: ${currentChar}`);
+                break;
+            case '=':
+                if (this.input[this.position + 1] === '=') {
+                    this.tokens.push(new SymbolicOperatorToken('=='));
+                    this.position += 2;
+                } else {
+                    this.tokens.push(new AssignToken());
+                    this.position++;
+                }
+                break;
+            case '(':
+                this.tokens.push(new LeftParenToken());
+                this.position++;
+                break;
+            case ')':
+                this.tokens.push(new RightParenToken());
+                this.position++;
+                break;
+            case ',':
+                this.tokens.push(new CommaToken());
+                this.position++;
+                break;
+            case '>':
+            case '<':
+            case '!':
+                if (this.input[this.position + 1] === '=') {
+                    this.tokens.push(new SymbolicOperatorToken(currentChar + '='));
+                    this.position += 2;
+                } else {
+                    this.tokens.push(new SymbolicOperatorToken(currentChar));
+                    this.position++;
+                }
+                break;
+            case '+':
+            case '-':
+            case '*':
+            case '/':
+                this.tokens.push(new SymbolicOperatorToken(currentChar));
+                this.position++;
+                break;
+            default:
+                throw new Error(`Unknown character: ${currentChar}`);
         }
     }
 }

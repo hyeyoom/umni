@@ -193,4 +193,29 @@ describe('Interpreter', () => {
             expect(evaluate('cos(pi/2)')).toEqual(new RealValue(0));
         });
     });
+
+    describe('삼항 연산', () => {
+        beforeEach(() => {
+            evaluate('x = 15000');
+            evaluate('y = 5000');
+        });
+
+        it('기본적인 삼항 연산을 수행할 수 있다', () => {
+            expect(evaluate('x > 10000 ? x * 0.97 : x * 0.8')).toEqual(new RealValue(14550));
+            expect(evaluate('y > 10000 ? y * 0.97 : y * 0.8')).toEqual(new RealValue(4000));
+        });
+
+        it('중첩된 삼항 연산을 수행할 수 있다', () => {
+            expect(evaluate('x > 20000 ? 1 : x > 10000 ? 2 : 3')).toEqual(new NaturalValue(2));
+        });
+
+        it('다양한 타입의 결과를 반환할 수 있다', () => {
+            expect(evaluate('true ? "yes" : "no"')).toEqual(new StringValue("yes"));
+            expect(evaluate('false ? 1km : 2km')).toEqual(new WithUnitValue(2, 'km'));
+        });
+
+        it('조건식이 불리언이 아닐 경우 에러를 발생시킨다', () => {
+            expect(() => evaluate('42 ? 1 : 0')).toThrow('Condition must evaluate to a boolean value');
+        });
+    });
 });
