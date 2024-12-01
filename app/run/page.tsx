@@ -20,6 +20,7 @@ import {v4 as uuidv4} from 'uuid';
 
 const STORAGE_KEY = 'umni-v2-code';
 const TABS_STORAGE_KEY = 'umni-tabs';
+const ACTIVE_TAB_KEY = 'umni-active-tab';
 
 export default function UmniRunV2() {
     const [code, setCode] = useState<string>('');
@@ -154,24 +155,42 @@ export default function UmniRunV2() {
         };
     }, [autoCompleteVisible, updateAutoCompletePosition]);
 
-    // 초기 로드 시 localStorage에서 탭 데이터 가져오기
+    // 초기 로드 시 localStorage에서 탭 데이터와 활성 탭 가져오기
     useEffect(() => {
         const savedTabs = localStorage.getItem(TABS_STORAGE_KEY);
+        const savedActiveTabId = localStorage.getItem(ACTIVE_TAB_KEY);
+        
         if (savedTabs) {
             const parsedTabs = JSON.parse(savedTabs);
             setTabs(parsedTabs);
-            // 활성 탭이 있으면 해당 탭의 코드를 설정
-            const activeTab = parsedTabs.find((tab: Tab) => tab.id === activeTabId);
-            if (activeTab) {
-                setCode(activeTab.code);
+            
+            // 저장된 활성 탭이 있고, 해당 탭이 존재하는 경우
+            if (savedActiveTabId && parsedTabs.some((tab: Tab) => tab.id === savedActiveTabId)) {
+                setActiveTabId(savedActiveTabId);
+                const activeTab = parsedTabs.find((tab: Tab) => tab.id === savedActiveTabId);
+                if (activeTab) {
+                    setCode(activeTab.code);
+                }
+            } else {
+                // 저장된 활성 탭이 없거나 유효하지 않은 경우 첫 번째 탭 선택
+                setActiveTabId(parsedTabs[0].id);
+                setCode(parsedTabs[0].code);
             }
         } else {
             // 초기 탭 생성
-            const initialTab = {id: uuidv4(), title: '새 탭', code: ''};
+            const initialTab = { id: uuidv4(), title: '새 탭', code: '' };
             setTabs([initialTab]);
             setActiveTabId(initialTab.id);
+            setCode('');
         }
     }, []);
+
+    // 활성 탭이 변경될 때마다 localStorage에 저장
+    useEffect(() => {
+        if (activeTabId) {
+            localStorage.setItem(ACTIVE_TAB_KEY, activeTabId);
+        }
+    }, [activeTabId]);
 
     // 탭이 변경될 때마다 localStorage에 저장
     useEffect(() => {
