@@ -6,7 +6,7 @@ import remarkGfm from 'remark-gfm';
 import Link from 'next/link';
 import '../globals.css';
 
-const SPEC = `# Umni 언어 명세서
+const SPEC = `# iNum 언어 명세서
 
 ## 소개
 Umni는 수학적 계산과 단위 변환을 쉽게 할 수 있도록 설계된 표현식 중심의 인터프리터 언어입니다.
@@ -23,7 +23,7 @@ Umni는 수학적 계산과 단위 변환을 쉽게 할 수 있도록 설계된 
 ### 2. 변수
 \`\`\`
 x = 42
-name = "Umni"
+name = "iNum"
 distance = 5km
 \`\`\`
 

@@ -22,7 +22,7 @@ const DEMO_EXPRESSIONS = [
         {expression: "원의넓이(3)"},
     ],
     [
-        {expression: "origin = 'Hello Umni'"},
+        {expression: "origin = 'Hello iNum'"},
         {expression: "enc = b64Encode(origin)"},
         {expression: "dec = b64Decode(enc)"},
         {expression: "type(origin)"},

@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2.0.0-rc",
-  "productName": "umni-desktop",
+  "productName": "inum-desktop",
   "version": "0.1.0",
   "identifier": "com.tauri.dev",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "umni",
+        "title": "inum",
         "width": 1920,
         "height": 860,
         "resizable": true,

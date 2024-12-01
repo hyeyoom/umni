@@ -18,9 +18,9 @@ import {TabView} from "@/app/components/TabView";
 import {Tab} from '@/app/types/tab';
 import {v4 as uuidv4} from 'uuid';
 
-const STORAGE_KEY = 'umni-v2-code';
-const TABS_STORAGE_KEY = 'umni-tabs';
-const ACTIVE_TAB_KEY = 'umni-active-tab';
+const STORAGE_KEY = 'inum-v2-code';
+const TABS_STORAGE_KEY = 'inum-tabs';
+const ACTIVE_TAB_KEY = 'inum-active-tab';
 
 export default function UmniRunV2() {
     const [code, setCode] = useState<string>('');
@@ -159,11 +159,11 @@ export default function UmniRunV2() {
     useEffect(() => {
         const savedTabs = localStorage.getItem(TABS_STORAGE_KEY);
         const savedActiveTabId = localStorage.getItem(ACTIVE_TAB_KEY);
-        
+
         if (savedTabs) {
             const parsedTabs = JSON.parse(savedTabs);
             setTabs(parsedTabs);
-            
+
             // 저장된 활성 탭이 있고, 해당 탭이 존재하는 경우
             if (savedActiveTabId && parsedTabs.some((tab: Tab) => tab.id === savedActiveTabId)) {
                 setActiveTabId(savedActiveTabId);
