@@ -749,19 +749,31 @@ body {
     overflow-x: auto;
     scrollbar-width: thin;
     -ms-overflow-style: none;
+    scroll-behavior: smooth;
 }
 
 .tab-list::-webkit-scrollbar {
-    height: 4px;
+    height: 3px;
+    background: transparent;
 }
 
 .tab-list::-webkit-scrollbar-track {
-    background: rgba(42, 42, 42, 0.6);
+    background: rgba(42, 42, 42, 0.3);
+    border-radius: 4px;
 }
 
 .tab-list::-webkit-scrollbar-thumb {
-    background: #8EFF1E;
-    border-radius: 2px;
+    background: linear-gradient(90deg, #8EFF1E 0%, #A5FF4C 100%);
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.tab-list::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(90deg, #A5FF4C 0%, #8EFF1E 100%);
+}
+
+.tab-list {
+    scrollbar-color: #8EFF1E rgba(42, 42, 42, 0.3);
 }
 
 .tab {
