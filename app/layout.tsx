@@ -31,7 +31,7 @@ export const metadata: Metadata = {
         description: "A programmer-friendly calculator that anyone can use. Convert units, write functions, and calculate with ease.",
     },
     verification: {
-        google: "Google Search Console verification code",
+        google: "iWmaFInJnmbUgp-og6FwJxMepqJkuWHaNIKr5kkjlCo",
     },
     alternates: {
         canonical: process.env.NEXT_PUBLIC_SITE_URL,
