@@ -150,7 +150,7 @@ export default function Home() {
     return (
         <div className="landing-page">
             <section className="hero-section">
-                <h1 className="title">U M N I</h1>
+                <h1 className="title">I N U M</h1>
                 <p className="subtitle">Smartest Programmable Calculator</p>
                 <div className="nav-links">
                     <Link href="/run" className="nav-link">시작하기</Link>
