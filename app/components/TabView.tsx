@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Tab } from '../types/tab';
+import { XMarkIcon, PlusIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 
 interface TabViewProps {
     tabs: Tab[];
@@ -63,6 +64,7 @@ export function TabView({
                         className={`tab ${tab.id === activeTabId ? 'active' : ''}`}
                         onClick={() => onTabChange(tab.id)}
                     >
+                        <DocumentTextIcon className="tab-icon" />
                         {editingTabId === tab.id ? (
                             <input
                                 ref={inputRef}
@@ -88,12 +90,12 @@ export function TabView({
                                 onTabRemove(tab.id);
                             }}
                         >
-                            ×
+                            <XMarkIcon className="tab-close-icon" />
                         </button>
                     </div>
                 ))}
                 <button className="tab-add" onClick={onTabAdd}>
-                    +
+                    <PlusIcon className="tab-add-icon" />
                 </button>
             </div>
         </div>
