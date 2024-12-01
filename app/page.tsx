@@ -153,8 +153,8 @@ export default function Home() {
                 <h1 className="title">I N U M</h1>
                 <p className="subtitle">Smartest Programmable Calculator</p>
                 <div className="nav-links">
-                    <Link href="/run" className="nav-link">시작하기</Link>
-                    <Link href="/spec" className="nav-link">문서</Link>
+                    <Link href="/run" className="nav-link">Run</Link>
+                    <Link href="/spec" className="nav-link">Document</Link>
                 </div>
             </section>
             <section className="demo-section">

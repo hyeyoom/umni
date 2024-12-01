@@ -23,7 +23,7 @@ export function EditorArea({
             onChange={onInput}
             onKeyDown={onKeyDown}
             onBlur={onBlur}
-            placeholder="계산식을 입력하세요..."
+            placeholder="Enter your calculation..."
             spellCheck={false}
         />
     );

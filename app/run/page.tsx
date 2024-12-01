@@ -178,7 +178,7 @@ export default function UmniRunV2() {
             }
         } else {
             // 초기 탭 생성
-            const initialTab = { id: uuidv4(), title: '새 탭', code: '' };
+            const initialTab = { id: uuidv4(), title: 'New Tab', code: '' };
             setTabs([initialTab]);
             setActiveTabId(initialTab.id);
             setCode('');
@@ -218,9 +218,9 @@ export default function UmniRunV2() {
         }
     };
 
-    const handleTabAdd = () => {
-        const newTab = {id: uuidv4(), title: '새 탭', code: ''};
-        setTabs(prev => [...prev, newTab]);
+    const createNewTab = () => {
+        const newTab = { id: uuidv4(), title: 'New Tab', code: '' };
+        setTabs([...tabs, newTab]);
         setActiveTabId(newTab.id);
         setCode('');
     };
@@ -228,7 +228,7 @@ export default function UmniRunV2() {
     const handleTabRemove = (tabId: string) => {
         if (tabs.length === 1) {
             // 마지막 탭은 삭제하지 않고 초기화
-            setTabs([{id: uuidv4(), title: '새 탭', code: ''}]);
+            setTabs([{id: uuidv4(), title: 'New Tab', code: ''}]);
             return;
         }
 
@@ -254,7 +254,7 @@ export default function UmniRunV2() {
                 tabs={tabs}
                 activeTabId={activeTabId}
                 onTabChange={handleTabChange}
-                onTabAdd={handleTabAdd}
+                onTabAdd={createNewTab}
                 onTabRemove={handleTabRemove}
                 onTabRename={handleTabRename}
             />

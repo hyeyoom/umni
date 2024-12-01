@@ -2,16 +2,16 @@ import {Environment} from '@/lib/Environment';
 import {Suggestion} from "@/app/types/suggestion";
 
 export const STATIC_SUGGESTIONS: Suggestion[] = [
-    {text: 'fn', type: 'keyword', description: '함수 선언'},
-    {text: 'to', type: 'keyword', description: '단위 변환'},
-    {text: 'times', type: 'keyword', description: '반복'},
-    {text: 'km', type: 'unit', description: '킬로미터'},
-    {text: 'm', type: 'unit', description: '미터'},
-    {text: 'cm', type: 'unit', description: '센티미터'},
-    {text: 'mm', type: 'unit', description: '밀리미터'},
-    {text: 'kb', type: 'unit', description: '킬로바이트'},
-    {text: 'mb', type: 'unit', description: '메가바이트'},
-    {text: 'gb', type: 'unit', description: '기가바이트'},
+    {text: 'fn', type: 'keyword', description: 'Function declaration'},
+    {text: 'to', type: 'keyword', description: 'Unit conversion'},
+    {text: 'times', type: 'keyword', description: 'Repeat operation'},
+    {text: 'km', type: 'unit', description: 'Kilometers'},
+    {text: 'm', type: 'unit', description: 'Meters'},
+    {text: 'cm', type: 'unit', description: 'Centimeters'},
+    {text: 'mm', type: 'unit', description: 'Millimeters'},
+    {text: 'kb', type: 'unit', description: 'Kilobytes'},
+    {text: 'mb', type: 'unit', description: 'Megabytes'},
+    {text: 'gb', type: 'unit', description: 'Gigabytes'},
 ];
 
 export function getAllSuggestions(environment: Environment): Suggestion[] {
@@ -22,7 +22,7 @@ export function getAllSuggestions(environment: Environment): Suggestion[] {
         suggestions.push({
             text: name,
             type: 'variable',
-            description: `사용자 정의 변수 (${value.toString()})`
+            description: `User defined variable (${value.toString()})`
         });
     });
 
@@ -31,7 +31,7 @@ export function getAllSuggestions(environment: Environment): Suggestion[] {
         suggestions.push({
             text: name,
             type: 'constant',
-            description: `상수 (${value.toString()})`
+            description: `Constant (${value.toString()})`
         });
     });
 
@@ -41,7 +41,7 @@ export function getAllSuggestions(environment: Environment): Suggestion[] {
         suggestions.push({
             text: name,
             type: 'function',
-            description: `함수 (${params})`
+            description: `Function (${params})`
         });
     });
 
@@ -50,7 +50,7 @@ export function getAllSuggestions(environment: Environment): Suggestion[] {
         suggestions.push({
             text: name,
             type: 'function',
-            description: '내장 함수'
+            description: 'Built-in function'
         });
     });
 
