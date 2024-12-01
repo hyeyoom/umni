@@ -733,6 +733,7 @@ body {
     top: 0;
     left: 0;
     z-index: 10;
+    overflow: hidden;
 }
 
 .tab-list {
@@ -745,6 +746,22 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     border-bottom: 1px solid rgba(58, 58, 58, 0.3);
+    overflow-x: auto;
+    scrollbar-width: thin;
+    -ms-overflow-style: none;
+}
+
+.tab-list::-webkit-scrollbar {
+    height: 4px;
+}
+
+.tab-list::-webkit-scrollbar-track {
+    background: rgba(42, 42, 42, 0.6);
+}
+
+.tab-list::-webkit-scrollbar-thumb {
+    background: #8EFF1E;
+    border-radius: 2px;
 }
 
 .tab {
