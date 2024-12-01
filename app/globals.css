@@ -12,7 +12,6 @@ body {
 .container {
     display: flex;
     flex-direction: column;
-    padding: 2rem;
     max-width: 1200px;
     margin: 0 auto;
     min-height: 100vh;
@@ -437,10 +436,8 @@ body {
 .editor-container {
     display: flex;
     height: 100vh;
-    padding: 2rem;
     background-color: var(--background);
     max-width: 1200px;
-    margin: 0 auto;
 }
 
 .editor-wrapper {
@@ -606,15 +603,15 @@ body {
     .spec-container {
         padding: 1rem;
     }
-    
+
     .spec-content h1 {
         font-size: 2rem;
     }
-    
+
     .spec-content h2 {
         font-size: 1.5rem;
     }
-    
+
     .spec-content h3 {
         font-size: 1.2rem;
     }
@@ -690,7 +687,7 @@ body {
     .hero-buttons {
         flex-direction: column;
     }
-    
+
     .floating-buttons {
         bottom: 1rem;
         right: 1rem;
@@ -725,6 +722,167 @@ body {
     .floating-button.help {
         bottom: 5rem;
         right: 1rem;
+    }
+}
+
+.tab-container {
+    width: 100%;
+    background: transparent;
+    margin-bottom: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 10;
+}
+
+.tab-list {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0.75rem 1rem;
+    background: rgba(31, 31, 31, 0.85);
+    backdrop-filter: blur(12px);
+    max-width: 1200px;
+    margin: 0 auto;
+    border-bottom: 1px solid rgba(58, 58, 58, 0.3);
+}
+
+.tab {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.75rem;
+    background: rgba(42, 42, 42, 0.6);
+    border: 1px solid rgba(58, 58, 58, 0.2);
+    border-radius: 6px;
+    cursor: pointer;
+    color: #bebebe;
+    font-family: var(--font-geist-sans);
+    transition: all 0.2s ease;
+    font-size: 0.85rem;
+    height: 2rem;
+    min-width: 120px;
+    backdrop-filter: blur(8px);
+}
+
+.tab:hover {
+    background: rgba(58, 58, 58, 0.8);
+    border-color: rgba(142, 255, 30, 0.2);
+}
+
+.tab.active {
+    background: rgba(58, 58, 58, 0.9);
+    color: #8EFF1E;
+    border-color: rgba(142, 255, 30, 0.3);
+    box-shadow: 0 0 10px rgba(142, 255, 30, 0.1);
+}
+
+.tab-icon {
+    width: 14px;
+    height: 14px;
+    opacity: 0.7;
+}
+
+.tab-title {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.tab-title-input {
+    background: transparent;
+    border: none;
+    color: inherit;
+    font-family: inherit;
+    font-size: inherit;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    min-width: 50px;
+    max-width: 120px;
+    outline: none;
+}
+
+.tab-title-input:focus {
+    border-bottom: 1px solid #8EFF1E;
+}
+
+.tab-close {
+    background: none;
+    border: none;
+    color: inherit;
+    padding: 2px;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}
+
+.tab-close:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.tab-close-icon {
+    width: 14px;
+    height: 14px;
+}
+
+.tab-add {
+    background: none;
+    border: none;
+    color: #8EFF1E;
+    padding: 0.4rem;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+}
+
+.tab-add:hover {
+    opacity: 1;
+    background: rgba(142, 255, 30, 0.1);
+}
+
+.tab-add-icon {
+    width: 16px;
+    height: 16px;
+}
+
+/* 컨테이너 패딩 조정 */
+.editor-container {
+    padding-top: calc(2rem + 48px) !important; /* 탭 영역 + 기존 패딩 */
+}
+
+/* 모바일 대응 */
+@media (max-width: 768px) {
+    .tab {
+        padding: 0.2rem 0.5rem;
+        font-size: 0.75rem;
+        height: 1.6rem;
+        min-width: 60px;
+    }
+
+    .tab-close {
+        width: 14px;
+        height: 14px;
+    }
+
+    .tab-add {
+        width: 20px;
+        height: 20px;
+    }
+
+    .editor-container {
+        padding-top: calc(1rem + 40px) !important;
     }
 }
 
