@@ -14,8 +14,12 @@ import {executeCode} from '@/app/hooks/useCodeExecution';
 import {calculateAutoCompletePosition, getCurrentWord} from '@/app/utils/editor';
 import {filterSuggestions, handleSuggestionSelect} from '@/app/utils/autoComplete';
 import {handleKeyboardEvent} from '@/app/utils/keyboardHandlers';
+import {TabView} from "@/app/components/TabView";
+import {Tab} from '@/app/types/tab';
+import {v4 as uuidv4} from 'uuid';
 
 const STORAGE_KEY = 'umni-v2-code';
+const TABS_STORAGE_KEY = 'umni-tabs';
 
 export default function UmniRunV2() {
     const [code, setCode] = useState<string>('');
@@ -29,6 +33,8 @@ export default function UmniRunV2() {
     const [autoCompletePosition, setAutoCompletePosition] = useState({top: 0, left: 0});
     const [filteredSuggestions, setFilteredSuggestions] = useState<Suggestion[]>([]);
     const [selectedIndex, setSelectedIndex] = useState(0);
+    const [tabs, setTabs] = useState<Tab[]>([]);
+    const [activeTabId, setActiveTabId] = useState<string>('');
 
     const router = useRouter();
 
@@ -148,34 +154,119 @@ export default function UmniRunV2() {
         };
     }, [autoCompleteVisible, updateAutoCompletePosition]);
 
+    // 초기 로드 시 localStorage에서 탭 데이터 가져오기
+    useEffect(() => {
+        const savedTabs = localStorage.getItem(TABS_STORAGE_KEY);
+        if (savedTabs) {
+            const parsedTabs = JSON.parse(savedTabs);
+            setTabs(parsedTabs);
+            // 활성 탭이 있으면 해당 탭의 코드를 설정
+            const activeTab = parsedTabs.find((tab: Tab) => tab.id === activeTabId);
+            if (activeTab) {
+                setCode(activeTab.code);
+            }
+        } else {
+            // 초기 탭 생성
+            const initialTab = {id: uuidv4(), title: '새 탭', code: ''};
+            setTabs([initialTab]);
+            setActiveTabId(initialTab.id);
+        }
+    }, []);
+
+    // 탭이 변경될 때마다 localStorage에 저장
+    useEffect(() => {
+        if (tabs.length > 0) {
+            localStorage.setItem(TABS_STORAGE_KEY, JSON.stringify(tabs));
+        }
+    }, [tabs]);
+
+    // 코드가 변경될 때마다 현재 활성 탭 업데이트
+    useEffect(() => {
+        if (activeTabId) {
+            setTabs(prevTabs =>
+                prevTabs.map(tab =>
+                    tab.id === activeTabId ? {...tab, code} : tab
+                )
+            );
+        }
+    }, [code, activeTabId]);
+
+    const handleTabChange = (tabId: string) => {
+        setActiveTabId(tabId);
+        const tab = tabs.find(t => t.id === tabId);
+        if (tab) {
+            setCode(tab.code);
+        }
+    };
+
+    const handleTabAdd = () => {
+        const newTab = {id: uuidv4(), title: '새 탭', code: ''};
+        setTabs(prev => [...prev, newTab]);
+        setActiveTabId(newTab.id);
+        setCode('');
+    };
+
+    const handleTabRemove = (tabId: string) => {
+        if (tabs.length === 1) {
+            // 마지막 탭은 삭제하지 않고 초기화
+            setTabs([{id: uuidv4(), title: '새 탭', code: ''}]);
+            return;
+        }
+
+        setTabs(prev => prev.filter(tab => tab.id !== tabId));
+        if (activeTabId === tabId) {
+            const remainingTabs = tabs.filter(tab => tab.id !== tabId);
+            setActiveTabId(remainingTabs[0].id);
+            setCode(remainingTabs[0].code);
+        }
+    };
+
+    const handleTabRename = (tabId: string, newTitle: string) => {
+        setTabs(prevTabs =>
+            prevTabs.map(tab =>
+                tab.id === tabId ? { ...tab, title: newTitle } : tab
+            )
+        );
+    };
+
     return (
-        <div className="editor-container">
-            <div className="editor-wrapper">
-                <EditorArea
-                    editorRef={editorRef}
-                    code={code}
-                    onInput={handleInput}
-                    onKeyDown={handleKeyDown}
-                    onBlur={() => {
-                        setTimeout(() => setAutoCompleteVisible(false), 200);
+        <div className="container">
+            <TabView
+                tabs={tabs}
+                activeTabId={activeTabId}
+                onTabChange={handleTabChange}
+                onTabAdd={handleTabAdd}
+                onTabRemove={handleTabRemove}
+                onTabRename={handleTabRename}
+            />
+            <div className="editor-container">
+                <div className="editor-wrapper">
+                    <EditorArea
+                        editorRef={editorRef}
+                        code={code}
+                        onInput={handleInput}
+                        onKeyDown={handleKeyDown}
+                        onBlur={() => {
+                            setTimeout(() => setAutoCompleteVisible(false), 200);
+                        }}
+                    />
+                    <ResultsOverlay results={results}/>
+                </div>
+                <FloatingButtons
+                    onClear={() => {
+                        setCode('');
+                        setResults([]);
                     }}
+                    onHelp={() => router.push('/spec')}
                 />
-                <ResultsOverlay results={results}/>
+                <AutoComplete
+                    suggestions={filteredSuggestions}
+                    onSelect={onSuggestionSelect}
+                    position={autoCompletePosition}
+                    visible={autoCompleteVisible}
+                    selectedIndex={selectedIndex}
+                />
             </div>
-            <FloatingButtons
-                onClear={() => {
-                    setCode('');
-                    setResults([]);
-                }}
-                onHelp={() => router.push('/spec')}
-            />
-            <AutoComplete
-                suggestions={filteredSuggestions}
-                onSelect={onSuggestionSelect}
-                position={autoCompletePosition}
-                visible={autoCompleteVisible}
-                selectedIndex={selectedIndex}
-            />
         </div>
     );
 }

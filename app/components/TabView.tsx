@@ -1,5 +1,5 @@
-import React from 'react';
-import {Tab} from '@/app/types/tab';
+import React, { useState, useRef, useEffect } from 'react';
+import { Tab } from '../types/tab';
 
 interface TabViewProps {
     tabs: Tab[];
@@ -11,13 +11,49 @@ interface TabViewProps {
 }
 
 export function TabView({
-                            tabs,
-                            activeTabId,
-                            onTabChange,
-                            onTabAdd,
-                            onTabRemove,
-                            onTabRename
-                        }: TabViewProps) {
+    tabs,
+    activeTabId,
+    onTabChange,
+    onTabAdd,
+    onTabRemove,
+    onTabRename
+}: TabViewProps) {
+    const [editingTabId, setEditingTabId] = useState<string | null>(null);
+    const [editingTitle, setEditingTitle] = useState('');
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (editingTabId && inputRef.current) {
+            inputRef.current.focus();
+            inputRef.current.select();
+        }
+    }, [editingTabId]);
+
+    const handleTitleClick = (e: React.MouseEvent, tab: Tab) => {
+        e.stopPropagation();
+        setEditingTabId(tab.id);
+        setEditingTitle(tab.title);
+    };
+
+    const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setEditingTitle(e.target.value);
+    };
+
+    const handleTitleSubmit = () => {
+        if (editingTabId && editingTitle.trim()) {
+            onTabRename(editingTabId, editingTitle.trim());
+        }
+        setEditingTabId(null);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            handleTitleSubmit();
+        } else if (e.key === 'Escape') {
+            setEditingTabId(null);
+        }
+    };
+
     return (
         <div className="tab-container">
             <div className="tab-list">
@@ -27,7 +63,24 @@ export function TabView({
                         className={`tab ${tab.id === activeTabId ? 'active' : ''}`}
                         onClick={() => onTabChange(tab.id)}
                     >
-                        <span className="tab-title">{tab.title}</span>
+                        {editingTabId === tab.id ? (
+                            <input
+                                ref={inputRef}
+                                className="tab-title-input"
+                                value={editingTitle}
+                                onChange={handleTitleChange}
+                                onBlur={handleTitleSubmit}
+                                onKeyDown={handleKeyDown}
+                                onClick={(e) => e.stopPropagation()}
+                            />
+                        ) : (
+                            <span 
+                                className="tab-title"
+                                onClick={(e) => handleTitleClick(e, tab)}
+                            >
+                                {tab.title}
+                            </span>
+                        )}
                         <button
                             className="tab-close"
                             onClick={(e) => {

@@ -12,7 +12,6 @@ body {
 .container {
     display: flex;
     flex-direction: column;
-    padding: 2rem;
     max-width: 1200px;
     margin: 0 auto;
     min-height: 100vh;
@@ -437,10 +436,8 @@ body {
 .editor-container {
     display: flex;
     height: 100vh;
-    padding: 2rem;
     background-color: var(--background);
     max-width: 1200px;
-    margin: 0 auto;
 }
 
 .editor-wrapper {
@@ -606,15 +603,15 @@ body {
     .spec-container {
         padding: 1rem;
     }
-    
+
     .spec-content h1 {
         font-size: 2rem;
     }
-    
+
     .spec-content h2 {
         font-size: 1.5rem;
     }
-    
+
     .spec-content h3 {
         font-size: 1.2rem;
     }
@@ -690,7 +687,7 @@ body {
     .hero-buttons {
         flex-direction: column;
     }
-    
+
     .floating-buttons {
         bottom: 1rem;
         right: 1rem;
@@ -730,69 +727,125 @@ body {
 
 .tab-container {
     width: 100%;
-    background: #2a2a2a;
-    border-bottom: 1px solid #3a3a3a;
-    margin-bottom: 1rem;
+    background: transparent;
+    margin-bottom: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 10;
 }
 
 .tab-list {
     display: flex;
     align-items: center;
     gap: 2px;
-    padding: 0.5rem 0.5rem 0 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(42, 42, 42, 0.7);
+    backdrop-filter: blur(10px);
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
 .tab {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: #1f1f1f;
-    border: 1px solid #3a3a3a;
-    border-bottom: none;
-    border-radius: 4px 4px 0 0;
+    padding: 0.25rem 0.75rem;
+    background: rgba(31, 31, 31, 0.8);
+    border: 1px solid rgba(58, 58, 58, 0.5);
+    border-radius: 4px;
     cursor: pointer;
     color: #bebebe;
     font-family: var(--font-geist-sans);
     transition: all 0.2s ease;
+    font-size: 0.8rem;
+    height: 1.8rem;
+    min-width: 80px;
 }
 
 .tab.active {
-    background: #3a3a3a;
+    background: rgba(58, 58, 58, 0.8);
     color: #8EFF1E;
-}
-
-.tab-title {
-    font-size: 0.9rem;
+    border-color: rgba(142, 255, 30, 0.3);
 }
 
 .tab-close {
     background: none;
     border: none;
     color: inherit;
-    font-size: 1.2rem;
+    font-size: 1rem;
     padding: 0;
     cursor: pointer;
     opacity: 0.6;
     transition: opacity 0.2s ease;
-}
-
-.tab-close:hover {
-    opacity: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    margin-left: auto;
 }
 
 .tab-add {
     background: none;
     border: none;
     color: #8EFF1E;
-    font-size: 1.2rem;
-    padding: 0.5rem;
+    font-size: 1rem;
+    padding: 0.25rem;
     cursor: pointer;
     opacity: 0.6;
     transition: opacity 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
 }
 
-.tab-add:hover {
-    opacity: 1;
+/* 컨테이너 패딩 조정 */
+.editor-container {
+    padding-top: calc(2rem + 48px) !important; /* 탭 영역 + 기존 패딩 */
+}
+
+/* 모바일 대응 */
+@media (max-width: 768px) {
+    .tab {
+        padding: 0.2rem 0.5rem;
+        font-size: 0.75rem;
+        height: 1.6rem;
+        min-width: 60px;
+    }
+
+    .tab-close {
+        width: 14px;
+        height: 14px;
+    }
+
+    .tab-add {
+        width: 20px;
+        height: 20px;
+    }
+
+    .editor-container {
+        padding-top: calc(1rem + 40px) !important;
+    }
+}
+
+.tab-title-input {
+    background: transparent;
+    border: none;
+    color: inherit;
+    font-family: inherit;
+    font-size: inherit;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    min-width: 50px;
+    max-width: 120px;
+    outline: none;
+}
+
+.tab-title-input:focus {
+    border-bottom: 1px solid #8EFF1E;
 }
 
