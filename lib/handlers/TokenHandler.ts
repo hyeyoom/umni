@@ -7,7 +7,12 @@ import {
     SemanticOperatorToken,
     StringLiteralToken,
     Token,
-    WithUnitToken
+    WithUnitToken,
+    SymbolicOperatorToken,
+    AssignToken,
+    LeftParenToken,
+    RightParenToken,
+    CommaToken
 } from '@/lib/tokens';
 
 export class TokenHandler {
@@ -91,5 +96,49 @@ export class TokenHandler {
 
     private isIdentifierChar(char: string): boolean {
         return /[a-zA-Z0-9_가-힣]/.test(char);
+    }
+
+    handleOperator(input: string, position: { value: number }): Token {
+        const char = input[position.value];
+        const nextChar = input[position.value + 1];
+        
+        // 두 문자 연산자 처리
+        if (nextChar === '=') {
+            switch (char) {
+                case '=':
+                case '!':
+                case '>':
+                case '<':
+                    position.value += 2;
+                    return new SymbolicOperatorToken(char + nextChar);
+            }
+        }
+        
+        // 단일 문자 연산자 처리
+        position.value++;
+        if (char === '=') {
+            return new AssignToken();
+        }
+        
+        return new SymbolicOperatorToken(char);
+    }
+
+    handlePunctuation(input: string, position: { value: number }): Token {
+        const char = input[position.value];
+        position.value++;
+        
+        switch (char) {
+            case '(':
+                return new LeftParenToken();
+            case ')':
+                return new RightParenToken();
+            case ',':
+                return new CommaToken();
+            case '?':
+            case ':':
+                return new SymbolicOperatorToken(char);
+            default:
+                throw new Error(`Unexpected punctuation: ${char}`);
+        }
     }
 }

@@ -1,5 +1,5 @@
 import { TokenHandler } from '@/lib/handlers/TokenHandler';
-import { NaturalToken, RealToken, WithUnitToken, StringLiteralToken, IdentifierToken, FunctionDeclarationToken, SemanticOperatorToken, SemanticOperatorSymbol } from '@/lib/tokens';
+import { NaturalToken, RealToken, WithUnitToken, StringLiteralToken, IdentifierToken, FunctionDeclarationToken, SemanticOperatorToken, SemanticOperatorSymbol, SymbolicOperatorToken, AssignToken, LeftParenToken, CommaToken } from '@/lib/tokens';
 
 describe('TokenHandler', () => {
     let handler: TokenHandler;
@@ -124,6 +124,75 @@ describe('TokenHandler', () => {
             
             expect(token).toBeInstanceOf(SemanticOperatorToken);
             expect((token as SemanticOperatorToken).symbol).toBe(SemanticOperatorSymbol.TO);
+        });
+    });
+
+    describe('handleOperator', () => {
+        it('단일 문자 연산자를 처리할 수 있다', () => {
+            const operators = '+-*/';
+            operators.split('').forEach(op => {
+                const position = { value: 0 };
+                const token = handler.handleOperator(op, position);
+                
+                expect(token).toBeInstanceOf(SymbolicOperatorToken);
+                expect((token as SymbolicOperatorToken).symbol).toBe(op);
+                expect(position.value).toBe(1);
+            });
+        });
+
+        it('두 문자 연산자를 처리할 수 있다', () => {
+            const operators = ['==', '!=', '>=', '<='];
+            operators.forEach(op => {
+                const position = { value: 0 };
+                const token = handler.handleOperator(op, position);
+                
+                expect(token).toBeInstanceOf(SymbolicOperatorToken);
+                expect((token as SymbolicOperatorToken).symbol).toBe(op);
+                expect(position.value).toBe(2);
+            });
+        });
+
+        it('할당 연산자를 처리할 수 있다', () => {
+            const input = '=';
+            const position = { value: 0 };
+            
+            const token = handler.handleOperator(input, position);
+            
+            expect(token).toBeInstanceOf(AssignToken);
+            expect(position.value).toBe(1);
+        });
+    });
+
+    describe('handlePunctuation', () => {
+        it('괄호를 처리할 수 있다', () => {
+            const input = '(';
+            const position = { value: 0 };
+            
+            const token = handler.handlePunctuation(input, position);
+            
+            expect(token).toBeInstanceOf(LeftParenToken);
+            expect(position.value).toBe(1);
+        });
+
+        it('쉼표를 처리할 수 있다', () => {
+            const input = ',';
+            const position = { value: 0 };
+            
+            const token = handler.handlePunctuation(input, position);
+            
+            expect(token).toBeInstanceOf(CommaToken);
+            expect(position.value).toBe(1);
+        });
+
+        it('삼항 연산자 기호를 처리할 수 있다', () => {
+            const input = '?';
+            const position = { value: 0 };
+            
+            const token = handler.handlePunctuation(input, position);
+            
+            expect(token).toBeInstanceOf(SymbolicOperatorToken);
+            expect((token as SymbolicOperatorToken).symbol).toBe('?');
+            expect(position.value).toBe(1);
         });
     });
 }); 
