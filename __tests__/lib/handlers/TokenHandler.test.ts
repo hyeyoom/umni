@@ -1,5 +1,5 @@
 import { TokenHandler } from '@/lib/handlers/TokenHandler';
-import { NaturalToken, RealToken, WithUnitToken, StringLiteralToken } from '@/lib/tokens';
+import { NaturalToken, RealToken, WithUnitToken, StringLiteralToken, IdentifierToken, FunctionDeclarationToken, SemanticOperatorToken, SemanticOperatorSymbol } from '@/lib/tokens';
 
 describe('TokenHandler', () => {
     let handler: TokenHandler;
@@ -81,6 +81,49 @@ describe('TokenHandler', () => {
             
             expect(() => handler.handleString(input, position))
                 .toThrow('Unterminated string literal');
+        });
+    });
+
+    describe('handleIdentifier', () => {
+        it('영문 식별자를 처리할 수 있다', () => {
+            const input = 'variable123';
+            const position = { value: 0 };
+            
+            const token = handler.handleIdentifier(input, position);
+            
+            expect(token).toBeInstanceOf(IdentifierToken);
+            expect((token as IdentifierToken).name).toBe('variable123');
+            expect(position.value).toBe(input.length);
+        });
+
+        it('한글 식별자를 처리할 수 있다', () => {
+            const input = '원의넓이';
+            const position = { value: 0 };
+            
+            const token = handler.handleIdentifier(input, position);
+            
+            expect(token).toBeInstanceOf(IdentifierToken);
+            expect((token as IdentifierToken).name).toBe('원의넓이');
+            expect(position.value).toBe(input.length);
+        });
+
+        it('키워드를 처리할 수 있다', () => {
+            const input = 'fn';
+            const position = { value: 0 };
+            
+            const token = handler.handleIdentifier(input, position);
+            
+            expect(token).toBeInstanceOf(FunctionDeclarationToken);
+        });
+
+        it('to 키워드를 처리할 수 있다', () => {
+            const input = 'to';
+            const position = { value: 0 };
+            
+            const token = handler.handleIdentifier(input, position);
+            
+            expect(token).toBeInstanceOf(SemanticOperatorToken);
+            expect((token as SemanticOperatorToken).symbol).toBe(SemanticOperatorSymbol.TO);
         });
     });
 }); 

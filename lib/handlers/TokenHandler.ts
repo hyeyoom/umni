@@ -1,10 +1,20 @@
-import { Token, NaturalToken, RealToken, WithUnitToken, StringLiteralToken } from '@/lib/tokens';
+import {
+    FunctionDeclarationToken,
+    IdentifierToken,
+    NaturalToken,
+    RealToken,
+    SemanticOperatorSymbol,
+    SemanticOperatorToken,
+    StringLiteralToken,
+    Token,
+    WithUnitToken
+} from '@/lib/tokens';
 
 export class TokenHandler {
     handleNumber(input: string, position: { value: number }): Token {
         const start = position.value;
         let hasDot = false;
-        
+
         while (position.value < input.length) {
             const char = input[position.value];
             if (char === '.') {
@@ -39,21 +49,47 @@ export class TokenHandler {
         if (quote !== '"' && quote !== "'") {
             throw new Error('String must start with quote');
         }
-        
+
         position.value++; // 시작 따옴표 건너뛰기
         const start = position.value;
-        
+
         while (position.value < input.length && input[position.value] !== quote) {
             position.value++;
         }
-        
+
         if (position.value >= input.length) {
             throw new Error('Unterminated string literal');
         }
-        
+
         const value = input.substring(start, position.value);
         position.value++; // 종료 따옴표 건너뛰기
-        
+
         return new StringLiteralToken(value);
     }
-} 
+
+    handleIdentifier(input: string, position: { value: number }): Token {
+        const start = position.value;
+
+        while (position.value < input.length && this.isIdentifierChar(input[position.value])) {
+            position.value++;
+        }
+
+        const identifier = input.substring(start, position.value);
+
+        // 키워드 처리
+        switch (identifier) {
+            case 'fn':
+                return new FunctionDeclarationToken();
+            case 'to':
+                return new SemanticOperatorToken(SemanticOperatorSymbol.TO);
+            case 'times':
+                return new SemanticOperatorToken(SemanticOperatorSymbol.TIMES);
+            default:
+                return new IdentifierToken(identifier);
+        }
+    }
+
+    private isIdentifierChar(char: string): boolean {
+        return /[a-zA-Z0-9_가-힣]/.test(char);
+    }
+}
