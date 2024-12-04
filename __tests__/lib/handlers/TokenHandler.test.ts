@@ -1,5 +1,5 @@
 import { TokenHandler } from '@/lib/handlers/TokenHandler';
-import { NaturalToken, RealToken, WithUnitToken } from '@/lib/tokens';
+import { NaturalToken, RealToken, WithUnitToken, StringLiteralToken } from '@/lib/tokens';
 
 describe('TokenHandler', () => {
     let handler: TokenHandler;
@@ -49,6 +49,38 @@ describe('TokenHandler', () => {
             expect((token as WithUnitToken).value).toBe(5);
             expect((token as WithUnitToken).unit).toBe('km');
             expect(position.value).toBe(3);
+        });
+    });
+
+    describe('handleString', () => {
+        it('큰따옴표로 둘러싸인 문자열을 처리할 수 있다', () => {
+            const input = '"Hello, World"';
+            const position = { value: 0 };
+            
+            const token = handler.handleString(input, position);
+            
+            expect(token).toBeInstanceOf(StringLiteralToken);
+            expect((token as StringLiteralToken).value).toBe('Hello, World');
+            expect(position.value).toBe(input.length);
+        });
+
+        it('작은따옴표로 둘러싸인 문자열을 처리할 수 있다', () => {
+            const input = "'Hello, World'";
+            const position = { value: 0 };
+            
+            const token = handler.handleString(input, position);
+            
+            expect(token).toBeInstanceOf(StringLiteralToken);
+            expect((token as StringLiteralToken).value).toBe('Hello, World');
+            expect(position.value).toBe(input.length);
+        });
+
+        it('종료되지 않은 문자열에 대해 에러를 발생시킨다', () => {
+            const input = '"Hello, World';
+            const position = { value: 0 };
+            
+            expect(() => handler.handleString(input, position))
+                .toThrow('Unterminated string literal');
         });
     });
 }); 
