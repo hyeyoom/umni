@@ -56,8 +56,50 @@ describe('Lexer', () => {
             });
         });
 
+        it('붙여쓴 단위를 토큰화할 수 있다', () => {
+            const lexer = new Lexer('40kb');
+            const tokens = lexer.tokenize();
+            
+            expect(tokens[0]).toBeInstanceOf(WithUnitToken);
+            expect((tokens[0] as WithUnitToken).value).toBe(40);
+            expect((tokens[0] as WithUnitToken).unit).toBe('kb');
+        });
+
+        it('띄어쓴 단위를 토큰화할 수 있다', () => {
+            const lexer = new Lexer('40 kb');
+            const tokens = lexer.tokenize();
+            
+            expect(tokens[0]).toBeInstanceOf(WithUnitToken);
+            expect((tokens[0] as WithUnitToken).value).toBe(40);
+            expect((tokens[0] as WithUnitToken).unit).toBe('kb');
+        });
+
+        it('여러 공백이 있어도 단위를 토큰화할 수 있다', () => {
+            const lexer = new Lexer('40   kb');
+            const tokens = lexer.tokenize();
+            
+            expect(tokens[0]).toBeInstanceOf(WithUnitToken);
+            expect((tokens[0] as WithUnitToken).value).toBe(40);
+            expect((tokens[0] as WithUnitToken).unit).toBe('kb');
+        });
+
         it('지원하지 않는 단위에 대해 에러를 발생시킨다', () => {
             expect(() => new Lexer('5xyz').tokenize()).toThrow('Unsupported unit');
+        });
+
+        it('단위 변환 표현식을 토큰화할 수 있다', () => {
+            const lexer = new Lexer('40 kb to mb');
+            const tokens = lexer.tokenize();
+            
+            expect(tokens[0]).toBeInstanceOf(WithUnitToken);
+            expect((tokens[0] as WithUnitToken).value).toBe(40);
+            expect((tokens[0] as WithUnitToken).unit).toBe('kb');
+            
+            expect(tokens[1]).toBeInstanceOf(SemanticOperatorToken);
+            expect((tokens[1] as SemanticOperatorToken).symbol).toBe(SemanticOperatorSymbol.TO);
+            
+            expect(tokens[2]).toBeInstanceOf(UnitToken);
+            expect((tokens[2] as UnitToken).name).toBe('mb');
         });
     });
 
