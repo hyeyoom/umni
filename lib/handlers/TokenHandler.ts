@@ -12,7 +12,8 @@ import {
     AssignToken,
     LeftParenToken,
     RightParenToken,
-    CommaToken
+    CommaToken,
+    UnitToken
 } from '@/lib/tokens';
 
 export class TokenHandler {
@@ -74,11 +75,11 @@ export class TokenHandler {
 
     handleIdentifier(input: string, position: { value: number }): Token {
         const start = position.value;
-
+        
         while (position.value < input.length && this.isIdentifierChar(input[position.value])) {
             position.value++;
         }
-
+        
         const identifier = input.substring(start, position.value);
 
         // 키워드 처리
@@ -90,6 +91,10 @@ export class TokenHandler {
             case 'times':
                 return new SemanticOperatorToken(SemanticOperatorSymbol.TIMES);
             default:
+                // 단위 처리
+                if (WithUnitToken.SUPPORT_UNITS.has(identifier)) {
+                    return new UnitToken(identifier);
+                }
                 return new IdentifierToken(identifier);
         }
     }
