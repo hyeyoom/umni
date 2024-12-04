@@ -52,7 +52,7 @@ describe('Interpreter', () => {
 
         it('단위가 있는 숫자의 연산을 처리할 수 있다', () => {
             expect(evaluate('5km + 3km')).toEqual(new WithUnitValue(8, 'km'));
-            expect(evaluate('1km - 500m to m')).toEqual(new WithUnitValue(500, 'm'));
+            expect(evaluate('1km - 500m')).toEqual(new WithUnitValue(0.5, 'km'));
         });
 
         it('문자열 연산을 처리할 수 있다', () => {
@@ -216,6 +216,16 @@ describe('Interpreter', () => {
 
         it('조건식이 불리언이 아닐 경우 에러를 발생시킨다', () => {
             expect(() => evaluate('42 ? 1 : 0')).toThrow('Condition must evaluate to a boolean value');
+        });
+    });
+
+    describe('단위 변환과 연산', () => {
+        it('단위 변환 후 나눗셈을 수행할 수 있다', () => {
+            const result = evaluate('40 to kb / 40');
+            expect(result).toEqual(new WithUnitValue(1, 'kb'));
+            
+            const result2 = evaluate('1000 to mb / 2');
+            expect(result2).toEqual(new WithUnitValue(500, 'mb'));
         });
     });
 });

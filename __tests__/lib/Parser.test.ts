@@ -218,4 +218,25 @@ describe('Parser', () => {
             expect(() => parse('x > 10 ? 1')).toThrow("Expected ':' in ternary operation");
         });
     });
+
+    describe('단위 변환과 연산 파싱', () => {
+        it('단위 변환과 나눗셈을 함께 파싱할 수 있다', () => {
+            const ast = parse('40 to kb / 40');
+            
+            expect(ast).toBeInstanceOf(BinaryOperationNode);
+            expect((ast as BinaryOperationNode).operator).toBe('/');
+            
+            const left = (ast as BinaryOperationNode).left;
+            expect(left).toBeInstanceOf(UnitConversionNode);
+            expect((left as UnitConversionNode).targetUnit).toBe('kb');
+            
+            const value = (left as UnitConversionNode).expression;
+            expect(value).toBeInstanceOf(NaturalNode);
+            expect((value as NaturalNode).value).toBe(40);
+            
+            const right = (ast as BinaryOperationNode).right;
+            expect(right).toBeInstanceOf(NaturalNode);
+            expect((right as NaturalNode).value).toBe(40);
+        });
+    });
 });
