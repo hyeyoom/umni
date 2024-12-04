@@ -50,6 +50,30 @@ describe('TokenHandler', () => {
             expect((token as WithUnitToken).unit).toBe('km');
             expect(position.value).toBe(3);
         });
+
+        describe('단위 처리', () => {
+            it('붙여쓴 단위를 처리할 수 있다', () => {
+                const input = '10gb';
+                const position = { value: 0 };
+                
+                const token = handler.handleNumber(input, position);
+                
+                expect(token).toBeInstanceOf(WithUnitToken);
+                expect((token as WithUnitToken).value).toBe(10);
+                expect((token as WithUnitToken).unit).toBe('gb');
+            });
+
+            it('띄어쓴 단위는 별도의 토큰으로 처리한다', () => {
+                const input = '10 gb';
+                const position = { value: 0 };
+                
+                const token = handler.handleNumber(input, position);
+                
+                expect(token).toBeInstanceOf(NaturalToken);
+                expect((token as NaturalToken).value).toBe(10);
+                expect(position.value).toBe(2); // 숫자 다음의 공백 전까지만 처리
+            });
+        });
     });
 
     describe('handleString', () => {

@@ -20,7 +20,8 @@ export class TokenHandler {
     handleNumber(input: string, position: { value: number }): Token {
         const start = position.value;
         let hasDot = false;
-
+        
+        // 숫자 부분 처리
         while (position.value < input.length) {
             const char = input[position.value];
             if (char === '.') {
@@ -37,14 +38,21 @@ export class TokenHandler {
         const numberStr = input.substring(start, position.value);
         const value = Number(numberStr);
 
-        const unitStart = position.value;
-        while (position.value < input.length && /[a-zA-Z]/.test(input[position.value])) {
-            position.value++;
-        }
+        // 단위 확인 (공백이 없는 경우에만)
+        if (position.value < input.length && !/\s/.test(input[position.value])) {
+            const unitStart = position.value;
+            while (position.value < input.length && /[a-zA-Z]/.test(input[position.value])) {
+                position.value++;
+            }
 
-        if (position.value > unitStart) {
-            const unit = input.substring(unitStart, position.value);
-            return new WithUnitToken(value, unit);
+            if (position.value > unitStart) {
+                const unit = input.substring(unitStart, position.value);
+                if (WithUnitToken.SUPPORT_UNITS.has(unit)) {
+                    return new WithUnitToken(value, unit);
+                }
+                // 지원하지 않는 단위에 대한 에러 처리
+                throw new Error('Unsupported unit');
+            }
         }
 
         return hasDot ? new RealToken(value) : new NaturalToken(value);
