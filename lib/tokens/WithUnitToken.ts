@@ -1,13 +1,13 @@
 // WithUnitToken.ts
-import {NumberToken} from './NumberToken';
+import { Token } from './Token';
 
-export class WithUnitToken extends NumberToken {
-    static SUPPORT_UNITS = new Set(['m', 'cm', 'mm', 'km', 'kb', 'mb', 'gb']);
+export class WithUnitToken extends Token {
+    static readonly SUPPORT_UNITS = new Set(['km', 'm', 'cm', 'mm', 'kb', 'mb', 'gb']);
 
     constructor(public value: number, public unit: string) {
         super();
         if (!WithUnitToken.SUPPORT_UNITS.has(unit)) {
-            throw new Error(`Unsupported unit: ${unit}`);
+            throw new Error('Unsupported unit');
         }
     }
 }
