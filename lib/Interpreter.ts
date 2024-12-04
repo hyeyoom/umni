@@ -82,17 +82,7 @@ export class Interpreter {
                 return interpreter.interpret(functionNode.body);
             }
         } else if (node instanceof UnitConversionNode) {
-            const value = this.interpret(node.expression);
-
-            if (value instanceof WithUnitValue) {
-                const convertedValue = UnitConverter.convert(value.value, value.unit, node.targetUnit);
-                return new WithUnitValue(convertedValue, node.targetUnit);
-            } else if (value instanceof RealValue || value instanceof NaturalValue) {
-                const convertedValue = UnitConverter.convert(value.value, 'm', node.targetUnit); // Assuming default source unit
-                return new WithUnitValue(convertedValue, node.targetUnit);
-            } else {
-                throw new Error('Cannot convert non-numeric value');
-            }
+            return this.interpretUnitConversion(node);
         } else if (node instanceof TernaryOperationNode) {
             const condition = this.interpret(node.condition);
 
@@ -428,5 +418,27 @@ export class Interpreter {
             default:
                 throw new Error(`Unknown operator: ${operator}`);
         }
+    }
+
+    private interpretUnitConversion(node: UnitConversionNode): ComputedValue {
+        const value = this.interpret(node.expression);
+
+        if (value instanceof WithUnitValue) {
+            // 이미 단위가 있는 경우
+            const convertedValue = UnitConverter.convert(value.value, value.unit, node.targetUnit);
+            return new WithUnitValue(convertedValue, node.targetUnit);
+        } else if (value instanceof RealValue || value instanceof NaturalValue) {
+            // 단위가 없는 경우, 해당 단위의 기본값으로 처리
+            if (node.targetUnit.match(/^(kb|mb|gb|tb)$/i)) {
+                // 데이터 크기 단위의 경우 바이트 기준으로 처리
+                return new WithUnitValue(value.value, node.targetUnit);
+            } else {
+                // 다른 단위들은 기존처럼 처리
+                const convertedValue = UnitConverter.convert(value.value, 'm', node.targetUnit);
+                return new WithUnitValue(convertedValue, node.targetUnit);
+            }
+        }
+        
+        throw new Error('Cannot convert non-numeric value');
     }
 }

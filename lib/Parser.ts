@@ -64,7 +64,11 @@ export class Parser {
     }
 
     private parseExpression(): ASTNode {
-        const node = this.parseComparison();
+        return this.parseTernary();
+    }
+
+    private parseTernary(): ASTNode {
+        const condition = this.parseComparison();
 
         if (this.currentToken() instanceof SymbolicOperatorToken &&
             (this.currentToken() as SymbolicOperatorToken).symbol === '?') {
@@ -79,99 +83,79 @@ export class Parser {
             this.consume(); // : 토큰 소비
             const falseExpression = this.parseExpression();
 
-            return new TernaryOperationNode(node, trueExpression, falseExpression);
+            return new TernaryOperationNode(condition, trueExpression, falseExpression);
+        }
+
+        return condition;
+    }
+
+    private parseComparison(): ASTNode {
+        let node = this.parseAdditive();
+
+        while (this.currentToken() instanceof SymbolicOperatorToken) {
+            const operator = (this.currentToken() as SymbolicOperatorToken).symbol;
+            if (!['>', '<', '>=', '<=', '==', '!='].includes(operator)) {
+                break;
+            }
+            this.consume();
+            const right = this.parseAdditive();
+            node = new BinaryOperationNode(node, operator, right);
         }
 
         return node;
     }
 
-    private parseComparison(): ASTNode {
-        let node = this.parseToConversion();
-        while (true) {
-            const token = this.currentToken();
-            if (
-                token instanceof SymbolicOperatorToken &&
-                (
-                    token.symbol === '>' ||
-                    token.symbol === '>=' ||
-                    token.symbol === '<' ||
-                    token.symbol === '<=' ||
-                    token.symbol === '==' ||
-                    token.symbol === '!='
-                )
-            ) {
-                this.consume();
-                const right = this.parseAddition();
-                node = new BinaryOperationNode(node, token.symbol, right);
-            } else {
+    private parseAdditive(): ASTNode {
+        let node = this.parseMultiplicative();
+
+        while (this.currentToken() instanceof SymbolicOperatorToken) {
+            const operator = (this.currentToken() as SymbolicOperatorToken).symbol;
+            if (!['+', '-'].includes(operator)) {
                 break;
             }
+            this.consume();
+            const right = this.parseMultiplicative();
+            node = new BinaryOperationNode(node, operator, right);
         }
+
+        return node;
+    }
+
+    private parseMultiplicative(): ASTNode {
+        let node = this.parseToConversion();
+
+        while (this.currentToken() instanceof SymbolicOperatorToken) {
+            const operator = (this.currentToken() as SymbolicOperatorToken).symbol;
+            if (!['*', '/'].includes(operator)) {
+                break;
+            }
+            this.consume();
+            const right = this.parseToConversion();
+            node = new BinaryOperationNode(node, operator, right);
+        }
+
         return node;
     }
 
     private parseToConversion(): ASTNode {
-        let node = this.parseAddition();
-        while (true) {
-            const token = this.currentToken();
-            if (
-                token instanceof SemanticOperatorToken &&
-                token.symbol === SemanticOperatorSymbol.TO
-            ) {
-                this.consume();
-                const targetUnitToken = this.consume();
-                if (targetUnitToken instanceof UnitToken) {
-                    node = new UnitConversionNode(node, targetUnitToken.name);
-                } else {
-                    throw new Error(`Expected unit identifier after 'to', but found: ${targetUnitToken.constructor.name}`);
-                }
-            } else {
-                break;
-            }
-        }
-        return node;
-    }
-
-    private parseAddition(): ASTNode {
-        let node = this.parseMultiplication();
-        while (true) {
-            const token = this.currentToken();
-            if (
-                token instanceof SymbolicOperatorToken &&
-                (token.symbol === '+' || token.symbol === '-')
-            ) {
-                this.consume();
-                const right = this.parseMultiplication();
-                node = new BinaryOperationNode(node, token.symbol, right);
-            } else {
-                break;
-            }
-        }
-        return node;
-    }
-
-    private parseMultiplication(): ASTNode {
         let node = this.parseUnary();
-        while (true) {
-            const token = this.currentToken();
-            if (
-                token instanceof SymbolicOperatorToken &&
-                (token.symbol === '*' || token.symbol === '/')
-            ) {
-                this.consume();
-                const right = this.parseUnary();
-                node = new BinaryOperationNode(node, token.symbol, right);
-            } else if (
-                token instanceof SemanticOperatorToken &&
-                token.symbol === SemanticOperatorSymbol.TIMES
-            ) {
-                this.consume();
-                const right = this.parseUnary();
-                node = new BinaryOperationNode(node, '*', right);
-            } else {
+
+        while (this.currentToken() instanceof SemanticOperatorToken) {
+            const operator = (this.currentToken() as SemanticOperatorToken).symbol;
+            if (operator !== SemanticOperatorSymbol.TO) {
                 break;
             }
+            this.consume();
+
+            if (this.currentToken() instanceof UnitToken) {
+                const targetUnitToken = this.currentToken() as UnitToken;
+                this.consume();
+                node = new UnitConversionNode(node, targetUnitToken.name);
+            } else {
+                throw new Error(`Expected unit identifier after 'to', but found: ${this.currentToken().constructor.name}`);
+            }
         }
+
         return node;
     }
 
