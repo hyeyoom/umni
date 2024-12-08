@@ -1,0 +1,17 @@
+{
+  "name": "iNum Calculator",
+  "short_name": "iNum",
+  "description": "A programmer-friendly calculator that anyone can use",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1f1f1f",
+  "theme_color": "#8EFF1E",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+} 
