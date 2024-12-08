@@ -5,7 +5,7 @@ import {
     IdentifierToken,
     LeftParenToken,
     NaturalToken,
-    RealToken,
+    RealToken, SemanticOperatorToken,
     StringLiteralToken,
     SymbolicOperatorToken,
     WithUnitToken
@@ -239,6 +239,50 @@ describe('TokenHandler', () => {
             expect(token).toBeInstanceOf(IdentifierToken);
             expect((token as IdentifierToken).name).toBe('my');
             expect(position.value).toBe(2);
+        });
+
+        it('연속된 공백이 있는 식별자를 처리할 수 있다', () => {
+            const input = 'my    var';
+            const position = { value: 0 };
+
+            const token = handler.handleIdentifier(input, position);
+
+            expect(token).toBeInstanceOf(IdentifierToken);
+            expect((token as IdentifierToken).name).toBe('my    var');
+        });
+
+        it('여러 키워드가 포함된 식별자는 첫 번째 키워드 전까지만 처리한다', () => {
+            const input = 'my fn to times var';
+            const position = { value: 0 };
+
+            const token = handler.handleIdentifier(input, position);
+
+            expect(token).toBeInstanceOf(IdentifierToken);
+            expect((token as IdentifierToken).name).toBe('my');
+            expect(position.value).toBe(2);
+        });
+
+        it('키워드로 시작하는 식별자를 올바르게 처리한다', () => {
+            const input = 'to_function';
+            const position = { value: 0 };
+
+            const token = handler.handleIdentifier(input, position);
+
+            expect(token).toBeInstanceOf(IdentifierToken);
+            expect(position.value).toBe(11);
+        });
+
+        it('키워드와 유사하지만 다른 식별자를 올바르게 처리한다', () => {
+            const testCases = ['to_function', 'fn_name', 'times2'];
+
+            testCases.forEach(input => {
+                const position = { value: 0 };
+                const token = handler.handleIdentifier(input, position);
+
+                expect(token).toBeInstanceOf(IdentifierToken);
+                expect((token as IdentifierToken).name).toBe(input);
+                expect(position.value).toBe(input.length);
+            });
         });
     });
 
