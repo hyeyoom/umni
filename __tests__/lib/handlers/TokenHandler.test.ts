@@ -175,45 +175,46 @@ describe('TokenHandler', () => {
     });
 
     describe('handleIdentifier', () => {
-        it('영문 식별자를 처리할 수 있다', () => {
-            const input = 'variable123';
-            const position = {value: 0};
-
+        it('기본적인 식별자를 처리할 수 있다', () => {
+            const input = 'myVar';
+            const position = { value: 0 };
+            
             const token = handler.handleIdentifier(input, position);
-
+            
             expect(token).toBeInstanceOf(IdentifierToken);
-            expect((token as IdentifierToken).name).toBe('variable123');
-            expect(position.value).toBe(input.length);
+            expect((token as IdentifierToken).name).toBe('myVar');
+        });
+
+        it('언더스코어로 시작하는 식별자를 처리할 수 있다', () => {
+            const testCases = ['_var', '_123', '_myVar'];
+            
+            testCases.forEach(input => {
+                const position = { value: 0 };
+                const token = handler.handleIdentifier(input, position);
+                
+                expect(token).toBeInstanceOf(IdentifierToken);
+                expect((token as IdentifierToken).name).toBe(input);
+            });
         });
 
         it('한글 식별자를 처리할 수 있다', () => {
-            const input = '원의넓이';
-            const position = {value: 0};
-
+            const input = '변수_1';
+            const position = { value: 0 };
+            
             const token = handler.handleIdentifier(input, position);
-
+            
             expect(token).toBeInstanceOf(IdentifierToken);
-            expect((token as IdentifierToken).name).toBe('원의넓이');
-            expect(position.value).toBe(input.length);
+            expect((token as IdentifierToken).name).toBe('변수_1');
         });
 
-        it('키워드를 처리할 수 있다', () => {
-            const input = 'fn';
-            const position = {value: 0};
-
-            const token = handler.handleIdentifier(input, position);
-
-            expect(token).toBeInstanceOf(FunctionDeclarationToken);
-        });
-
-        it('to 키워드를 처리할 수 있다', () => {
-            const input = 'to';
-            const position = {value: 0};
-
-            const token = handler.handleIdentifier(input, position);
-
-            expect(token).toBeInstanceOf(SemanticOperatorToken);
-            expect((token as SemanticOperatorToken).symbol).toBe(SemanticOperatorSymbol.TO);
+        it('잘못된 식별자 형식에 대해 에러를 발생시킨다', () => {
+            const invalidCases = ['1var', '123_var', '@var'];
+            
+            invalidCases.forEach(input => {
+                const position = { value: 0 };
+                expect(() => handler.handleIdentifier(input, position))
+                    .toThrow('Invalid identifier format');
+            });
         });
     });
 

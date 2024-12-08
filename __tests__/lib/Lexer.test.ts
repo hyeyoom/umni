@@ -193,6 +193,18 @@ describe('Lexer', () => {
             expect(tokens[0]).toBeInstanceOf(IdentifierToken);
             expect((tokens[0] as IdentifierToken).name).toBe('area51');
         });
+
+        it('언더스코어로 시작하는 식별자를 토큰화할 수 있다', () => {
+            const testCases = ['_var', '_123var', '_한글변수'];
+            
+            testCases.forEach(input => {
+                const lexer = new Lexer(input);
+                const tokens = lexer.tokenize();
+                
+                expect(tokens[0]).toBeInstanceOf(IdentifierToken);
+                expect((tokens[0] as IdentifierToken).name).toBe(input);
+            });
+        });
     });
 
     describe('복합 표현식 토큰화', () => {

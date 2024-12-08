@@ -46,7 +46,7 @@ export class Lexer {
                 }
 
                 this.tokens.push(numberToken);
-            } else if (/[가-힣a-zA-Z]/.test(currentChar)) {
+            } else if (/[가-힣a-zA-Z_]/.test(currentChar)) {
                 this.tokens.push(this.handler.handleIdentifier(this.input, pos));
                 this.position = pos.value;
             } else if (currentChar === '"' || currentChar === "'") {

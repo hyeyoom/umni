@@ -99,7 +99,13 @@ export class TokenHandler {
     handleIdentifier(input: string, position: { value: number }): Token {
         const start = position.value;
 
-        while (position.value < input.length && this.isIdentifierChar(input[position.value])) {
+        // 첫 문자는 알파벳이나 언더스코어여야 함
+        if (!/[a-zA-Z_가-힣]/.test(input[start])) {
+            throw new Error('Invalid identifier format');
+        }
+
+        // 나머지 문자는 알파벳, 숫자, 언더스코어 허용
+        while (position.value < input.length && /[a-zA-Z0-9_가-힣]/.test(input[position.value])) {
             position.value++;
         }
 
