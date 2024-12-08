@@ -1,5 +1,18 @@
-import { TokenHandler } from '@/lib/handlers/TokenHandler';
-import { NaturalToken, RealToken, WithUnitToken, StringLiteralToken, IdentifierToken, FunctionDeclarationToken, SemanticOperatorToken, SemanticOperatorSymbol, SymbolicOperatorToken, AssignToken, LeftParenToken, CommaToken } from '@/lib/tokens';
+import {TokenHandler} from '@/lib/handlers/TokenHandler';
+import {
+    AssignToken,
+    CommaToken,
+    FunctionDeclarationToken,
+    IdentifierToken,
+    LeftParenToken,
+    NaturalToken,
+    RealToken,
+    SemanticOperatorSymbol,
+    SemanticOperatorToken,
+    StringLiteralToken,
+    SymbolicOperatorToken,
+    WithUnitToken
+} from '@/lib/tokens';
 
 describe('TokenHandler', () => {
     let handler: TokenHandler;
@@ -11,10 +24,10 @@ describe('TokenHandler', () => {
     describe('handleNumber', () => {
         it('자연수를 처리할 수 있다', () => {
             const input = '42';
-            const position = { value: 0 };
-            
+            const position = {value: 0};
+
             const token = handler.handleNumber(input, position);
-            
+
             expect(token).toBeInstanceOf(NaturalToken);
             expect((token as NaturalToken).value).toBe(42);
             expect(position.value).toBe(2);
@@ -22,10 +35,10 @@ describe('TokenHandler', () => {
 
         it('실수를 처리할 수 있다', () => {
             const input = '3.14';
-            const position = { value: 0 };
-            
+            const position = {value: 0};
+
             const token = handler.handleNumber(input, position);
-            
+
             expect(token).toBeInstanceOf(RealToken);
             expect((token as RealToken).value).toBe(3.14);
             expect(position.value).toBe(4);
@@ -33,18 +46,18 @@ describe('TokenHandler', () => {
 
         it('잘못된 숫자 형식에 대해 에러를 발생시킨다', () => {
             const input = '3.14.15';
-            const position = { value: 0 };
-            
+            const position = {value: 0};
+
             expect(() => handler.handleNumber(input, position))
                 .toThrow('Invalid number format');
         });
 
         it('숫자와 단위를 함께 처리할 수 있다', () => {
             const input = '5km';
-            const position = { value: 0 };
-            
+            const position = {value: 0};
+
             const token = handler.handleNumber(input, position);
-            
+
             expect(token).toBeInstanceOf(WithUnitToken);
             expect((token as WithUnitToken).value).toBe(5);
             expect((token as WithUnitToken).unit).toBe('km');
@@ -54,10 +67,10 @@ describe('TokenHandler', () => {
         describe('단위 처리', () => {
             it('붙여쓴 단위를 처리할 수 있다', () => {
                 const input = '10gb';
-                const position = { value: 0 };
-                
+                const position = {value: 0};
+
                 const token = handler.handleNumber(input, position);
-                
+
                 expect(token).toBeInstanceOf(WithUnitToken);
                 expect((token as WithUnitToken).value).toBe(10);
                 expect((token as WithUnitToken).unit).toBe('gb');
@@ -65,13 +78,66 @@ describe('TokenHandler', () => {
 
             it('띄어쓴 단위는 별도의 토큰으로 처리한다', () => {
                 const input = '10 gb';
-                const position = { value: 0 };
-                
+                const position = {value: 0};
+
                 const token = handler.handleNumber(input, position);
-                
+
                 expect(token).toBeInstanceOf(NaturalToken);
                 expect((token as NaturalToken).value).toBe(10);
                 expect(position.value).toBe(2); // 숫자 다음의 공백 전까지만 처리
+            });
+
+            it('언더스코어가 포함된 숫자를 처리할 수 있다', () => {
+                const testCases = [
+                    {input: '100_000', expected: 100000},
+                    {input: '1_000_000', expected: 1000000},
+                    {input: '1_234.567_89', expected: 1234.56789}
+                ];
+
+                testCases.forEach(({input, expected}) => {
+                    const position = {value: 0};
+                    const token = handler.handleNumber(input, position);
+
+                    if (input.includes('.')) {
+                        expect(token).toBeInstanceOf(RealToken);
+                        expect((token as RealToken).value).toBe(expected);
+                    } else {
+                        expect(token).toBeInstanceOf(NaturalToken);
+                        expect((token as NaturalToken).value).toBe(expected);
+                    }
+                });
+            });
+
+            it('잘못된 언더스코어 사용에 대해 에러를 발생시킨다', () => {
+                const invalidCases = ['_100', '100__000'];
+
+                invalidCases.forEach(input => {
+                    const position = {value: 0};
+                    expect(() => handler.handleNumber(input, position))
+                        .toThrow('Invalid number format');
+                });
+            });
+
+            it('올바른 언더스코어 사용을 처리할 수 있다', () => {
+                const testCases = [
+                    {input: '1_000', expected: 1000},
+                    {input: '1_000_000', expected: 1000000},
+                    {input: '1_234.567_89', expected: 1234.56789},
+                    {input: '100_', expected: 100}
+                ];
+
+                testCases.forEach(({input, expected}) => {
+                    const position = {value: 0};
+                    const token = handler.handleNumber(input, position);
+
+                    if (input.includes('.')) {
+                        expect(token).toBeInstanceOf(RealToken);
+                        expect((token as RealToken).value).toBe(expected);
+                    } else {
+                        expect(token).toBeInstanceOf(NaturalToken);
+                        expect((token as NaturalToken).value).toBe(expected);
+                    }
+                });
             });
         });
     });
@@ -79,10 +145,10 @@ describe('TokenHandler', () => {
     describe('handleString', () => {
         it('큰따옴표로 둘러싸인 문자열을 처리할 수 있다', () => {
             const input = '"Hello, World"';
-            const position = { value: 0 };
-            
+            const position = {value: 0};
+
             const token = handler.handleString(input, position);
-            
+
             expect(token).toBeInstanceOf(StringLiteralToken);
             expect((token as StringLiteralToken).value).toBe('Hello, World');
             expect(position.value).toBe(input.length);
@@ -90,10 +156,10 @@ describe('TokenHandler', () => {
 
         it('작은따옴표로 둘러싸인 문자열을 처리할 수 있다', () => {
             const input = "'Hello, World'";
-            const position = { value: 0 };
-            
+            const position = {value: 0};
+
             const token = handler.handleString(input, position);
-            
+
             expect(token).toBeInstanceOf(StringLiteralToken);
             expect((token as StringLiteralToken).value).toBe('Hello, World');
             expect(position.value).toBe(input.length);
@@ -101,8 +167,8 @@ describe('TokenHandler', () => {
 
         it('종료되지 않은 문자열에 대해 에러를 발생시킨다', () => {
             const input = '"Hello, World';
-            const position = { value: 0 };
-            
+            const position = {value: 0};
+
             expect(() => handler.handleString(input, position))
                 .toThrow('Unterminated string literal');
         });
@@ -111,10 +177,10 @@ describe('TokenHandler', () => {
     describe('handleIdentifier', () => {
         it('영문 식별자를 처리할 수 있다', () => {
             const input = 'variable123';
-            const position = { value: 0 };
-            
+            const position = {value: 0};
+
             const token = handler.handleIdentifier(input, position);
-            
+
             expect(token).toBeInstanceOf(IdentifierToken);
             expect((token as IdentifierToken).name).toBe('variable123');
             expect(position.value).toBe(input.length);
@@ -122,10 +188,10 @@ describe('TokenHandler', () => {
 
         it('한글 식별자를 처리할 수 있다', () => {
             const input = '원의넓이';
-            const position = { value: 0 };
-            
+            const position = {value: 0};
+
             const token = handler.handleIdentifier(input, position);
-            
+
             expect(token).toBeInstanceOf(IdentifierToken);
             expect((token as IdentifierToken).name).toBe('원의넓이');
             expect(position.value).toBe(input.length);
@@ -133,19 +199,19 @@ describe('TokenHandler', () => {
 
         it('키워드를 처리할 수 있다', () => {
             const input = 'fn';
-            const position = { value: 0 };
-            
+            const position = {value: 0};
+
             const token = handler.handleIdentifier(input, position);
-            
+
             expect(token).toBeInstanceOf(FunctionDeclarationToken);
         });
 
         it('to 키워드를 처리할 수 있다', () => {
             const input = 'to';
-            const position = { value: 0 };
-            
+            const position = {value: 0};
+
             const token = handler.handleIdentifier(input, position);
-            
+
             expect(token).toBeInstanceOf(SemanticOperatorToken);
             expect((token as SemanticOperatorToken).symbol).toBe(SemanticOperatorSymbol.TO);
         });
@@ -155,9 +221,9 @@ describe('TokenHandler', () => {
         it('단일 문자 연산자를 처리할 수 있다', () => {
             const operators = '+-*/';
             operators.split('').forEach(op => {
-                const position = { value: 0 };
+                const position = {value: 0};
                 const token = handler.handleOperator(op, position);
-                
+
                 expect(token).toBeInstanceOf(SymbolicOperatorToken);
                 expect((token as SymbolicOperatorToken).symbol).toBe(op);
                 expect(position.value).toBe(1);
@@ -167,9 +233,9 @@ describe('TokenHandler', () => {
         it('두 문자 연산자를 처리할 수 있다', () => {
             const operators = ['==', '!=', '>=', '<='];
             operators.forEach(op => {
-                const position = { value: 0 };
+                const position = {value: 0};
                 const token = handler.handleOperator(op, position);
-                
+
                 expect(token).toBeInstanceOf(SymbolicOperatorToken);
                 expect((token as SymbolicOperatorToken).symbol).toBe(op);
                 expect(position.value).toBe(2);
@@ -178,10 +244,10 @@ describe('TokenHandler', () => {
 
         it('할당 연산자를 처리할 수 있다', () => {
             const input = '=';
-            const position = { value: 0 };
-            
+            const position = {value: 0};
+
             const token = handler.handleOperator(input, position);
-            
+
             expect(token).toBeInstanceOf(AssignToken);
             expect(position.value).toBe(1);
         });
@@ -190,33 +256,33 @@ describe('TokenHandler', () => {
     describe('handlePunctuation', () => {
         it('괄호를 처리할 수 있다', () => {
             const input = '(';
-            const position = { value: 0 };
-            
+            const position = {value: 0};
+
             const token = handler.handlePunctuation(input, position);
-            
+
             expect(token).toBeInstanceOf(LeftParenToken);
             expect(position.value).toBe(1);
         });
 
         it('쉼표를 처리할 수 있다', () => {
             const input = ',';
-            const position = { value: 0 };
-            
+            const position = {value: 0};
+
             const token = handler.handlePunctuation(input, position);
-            
+
             expect(token).toBeInstanceOf(CommaToken);
             expect(position.value).toBe(1);
         });
 
         it('삼항 연산자 기호를 처리할 수 있다', () => {
             const input = '?';
-            const position = { value: 0 };
-            
+            const position = {value: 0};
+
             const token = handler.handlePunctuation(input, position);
-            
+
             expect(token).toBeInstanceOf(SymbolicOperatorToken);
             expect((token as SymbolicOperatorToken).symbol).toBe('?');
             expect(position.value).toBe(1);
         });
     });
-}); 
+});

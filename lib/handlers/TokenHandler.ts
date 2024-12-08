@@ -1,44 +1,60 @@
 import {
+    AssignToken,
+    CommaToken,
     FunctionDeclarationToken,
     IdentifierToken,
+    LeftParenToken,
     NaturalToken,
     RealToken,
+    RightParenToken,
     SemanticOperatorSymbol,
     SemanticOperatorToken,
     StringLiteralToken,
-    Token,
-    WithUnitToken,
     SymbolicOperatorToken,
-    AssignToken,
-    LeftParenToken,
-    RightParenToken,
-    CommaToken,
-    UnitToken
+    Token,
+    UnitToken,
+    WithUnitToken
 } from '@/lib/tokens';
 
 export class TokenHandler {
     handleNumber(input: string, position: { value: number }): Token {
         const start = position.value;
         let hasDot = false;
-        
-        // 숫자 부분 처리
+        let hasDigit = false;
+        let lastWasUnderscore = false;
+
+        // 첫 문자가 언더스코어인 경우 에러
+        if (input[position.value] === '_') {
+            throw new Error('Invalid number format');
+        }
+
         while (position.value < input.length) {
             const char = input[position.value];
+
             if (char === '.') {
-                if (hasDot) {
+                if (hasDot || lastWasUnderscore) {
                     throw new Error('Invalid number format');
                 }
                 hasDot = true;
-            } else if (!/[0-9]/.test(char)) {
+                lastWasUnderscore = false;
+            } else if (char === '_') {
+                if (lastWasUnderscore || !hasDigit) {
+                    throw new Error('Invalid number format');
+                }
+                lastWasUnderscore = true;
+            } else if (/[0-9]/.test(char)) {
+                hasDigit = true;
+                lastWasUnderscore = false;
+            } else {
                 break;
             }
             position.value++;
         }
 
-        const numberStr = input.substring(start, position.value);
+        const numberStr = input.substring(start, position.value).replace(/_/g, '');
         const value = Number(numberStr);
 
-        // 단위 확인 (공백이 없는 경우에만)
+        // 단위 확인 부분
         if (position.value < input.length && !/\s/.test(input[position.value])) {
             const unitStart = position.value;
             while (position.value < input.length && /[a-zA-Z]/.test(input[position.value])) {
@@ -50,7 +66,6 @@ export class TokenHandler {
                 if (WithUnitToken.SUPPORT_UNITS.has(unit)) {
                     return new WithUnitToken(value, unit);
                 }
-                // 지원하지 않는 단위에 대한 에러 처리
                 throw new Error('Unsupported unit');
             }
         }
@@ -83,11 +98,11 @@ export class TokenHandler {
 
     handleIdentifier(input: string, position: { value: number }): Token {
         const start = position.value;
-        
+
         while (position.value < input.length && this.isIdentifierChar(input[position.value])) {
             position.value++;
         }
-        
+
         const identifier = input.substring(start, position.value);
 
         // 키워드 처리
@@ -114,7 +129,7 @@ export class TokenHandler {
     handleOperator(input: string, position: { value: number }): Token {
         const char = input[position.value];
         const nextChar = input[position.value + 1];
-        
+
         // 두 문자 연산자 처리
         if (nextChar === '=') {
             switch (char) {
@@ -126,20 +141,20 @@ export class TokenHandler {
                     return new SymbolicOperatorToken(char + nextChar);
             }
         }
-        
+
         // 단일 문자 연산자 처리
         position.value++;
         if (char === '=') {
             return new AssignToken();
         }
-        
+
         return new SymbolicOperatorToken(char);
     }
 
     handlePunctuation(input: string, position: { value: number }): Token {
         const char = input[position.value];
         position.value++;
-        
+
         switch (char) {
             case '(':
                 return new LeftParenToken();
