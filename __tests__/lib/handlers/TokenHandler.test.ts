@@ -2,13 +2,10 @@ import {TokenHandler} from '@/lib/handlers/TokenHandler';
 import {
     AssignToken,
     CommaToken,
-    FunctionDeclarationToken,
     IdentifierToken,
     LeftParenToken,
     NaturalToken,
     RealToken,
-    SemanticOperatorSymbol,
-    SemanticOperatorToken,
     StringLiteralToken,
     SymbolicOperatorToken,
     WithUnitToken
@@ -178,20 +175,20 @@ describe('TokenHandler', () => {
         it('기본적인 식별자를 처리할 수 있다', () => {
             const input = 'myVar';
             const position = { value: 0 };
-            
+
             const token = handler.handleIdentifier(input, position);
-            
+
             expect(token).toBeInstanceOf(IdentifierToken);
             expect((token as IdentifierToken).name).toBe('myVar');
         });
 
         it('언더스코어로 시작하는 식별자를 처리할 수 있다', () => {
             const testCases = ['_var', '_123', '_myVar'];
-            
+
             testCases.forEach(input => {
                 const position = { value: 0 };
                 const token = handler.handleIdentifier(input, position);
-                
+
                 expect(token).toBeInstanceOf(IdentifierToken);
                 expect((token as IdentifierToken).name).toBe(input);
             });
@@ -200,21 +197,48 @@ describe('TokenHandler', () => {
         it('한글 식별자를 처리할 수 있다', () => {
             const input = '변수_1';
             const position = { value: 0 };
-            
+
             const token = handler.handleIdentifier(input, position);
-            
+
             expect(token).toBeInstanceOf(IdentifierToken);
             expect((token as IdentifierToken).name).toBe('변수_1');
         });
 
         it('잘못된 식별자 형식에 대해 에러를 발생시킨다', () => {
             const invalidCases = ['1var', '123_var', '@var'];
-            
+
             invalidCases.forEach(input => {
                 const position = { value: 0 };
                 expect(() => handler.handleIdentifier(input, position))
                     .toThrow('Invalid identifier format');
             });
+        });
+
+        it('공백이 포함된 식별자를 처리할 수 있다', () => {
+            const testCases = [
+                { input: 'my var', expected: 'my var' },
+                { input: 'hello   world', expected: 'hello   world' },
+                { input: '안녕 세상', expected: '안녕 세상' }
+            ];
+
+            testCases.forEach(({input, expected}) => {
+                const position = { value: 0 };
+                const token = handler.handleIdentifier(input, position);
+
+                expect(token).toBeInstanceOf(IdentifierToken);
+                expect((token as IdentifierToken).name).toBe(expected);
+            });
+        });
+
+        it('키워드가 포함된 식별자는 키워드 전까지만 처리한다', () => {
+            const input = 'my fn var';
+            const position = { value: 0 };
+
+            const token = handler.handleIdentifier(input, position);
+
+            expect(token).toBeInstanceOf(IdentifierToken);
+            expect((token as IdentifierToken).name).toBe('my');
+            expect(position.value).toBe(2);
         });
     });
 

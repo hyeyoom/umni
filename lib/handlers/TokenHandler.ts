@@ -104,28 +104,50 @@ export class TokenHandler {
             throw new Error('Invalid identifier format');
         }
 
-        // 나머지 문자는 알파벳, 숫자, 언더스코어 허용
-        while (position.value < input.length && /[a-zA-Z0-9_가-힣]/.test(input[position.value])) {
-            position.value++;
-        }
-
-        const identifier = input.substring(start, position.value);
-
-        // 키워드 처리
-        switch (identifier) {
-            case 'fn':
-                return new FunctionDeclarationToken();
-            case 'to':
-                return new SemanticOperatorToken(SemanticOperatorSymbol.TO);
-            case 'times':
-                return new SemanticOperatorToken(SemanticOperatorSymbol.TIMES);
-            default:
-                // 단위 처리
-                if (WithUnitToken.SUPPORT_UNITS.has(identifier)) {
-                    return new UnitToken(identifier);
+        // 시작 위치의 단어가 키워드인지 확인
+        const keywords = ['fn', 'to', 'times'];
+        for (const keyword of keywords) {
+            if (input.substring(start).startsWith(keyword) &&
+                (input.length === start + keyword.length || /\s/.test(input[start + keyword.length]))) {
+                position.value = start + keyword.length;
+                switch (keyword) {
+                    case 'fn':
+                        return new FunctionDeclarationToken();
+                    case 'to':
+                        return new SemanticOperatorToken(SemanticOperatorSymbol.TO);
+                    case 'times':
+                        return new SemanticOperatorToken(SemanticOperatorSymbol.TIMES);
                 }
-                return new IdentifierToken(identifier);
+            }
         }
+
+        // 일반 식별자 처리
+        let end = start;
+
+        while (end < input.length) {
+            // 다음 단어가 키워드인지 확인
+            if (/\s/.test(input[end])) {
+                const nextWord = input.substring(end + 1).trim().split(/\s+/)[0];
+                if (keywords.includes(nextWord)) {
+                    break;
+                }
+            }
+
+            // 식별자에 허용되지 않는 문자를 만나면 중단
+            if (!/[a-zA-Z0-9_가-힣\s]/.test(input[end])) {
+                break;
+            }
+
+            end++;
+        }
+
+        position.value = end;
+        const identifier = input.substring(start, end).trim();
+
+        if (WithUnitToken.SUPPORT_UNITS.has(identifier)) {
+            return new UnitToken(identifier);
+        }
+        return new IdentifierToken(identifier);
     }
 
     handleOperator(input: string, position: { value: number }): Token {
