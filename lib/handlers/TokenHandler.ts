@@ -128,10 +128,6 @@ export class TokenHandler {
         }
     }
 
-    private isIdentifierChar(char: string): boolean {
-        return /[a-zA-Z0-9_가-힣]/.test(char);
-    }
-
     handleOperator(input: string, position: { value: number }): Token {
         const char = input[position.value];
         const nextChar = input[position.value + 1];
