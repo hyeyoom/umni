@@ -39,7 +39,7 @@ export const metadata: Metadata = {
         locale: "en_US",
         type: "website",
         images: [{
-            url: '/og-image.png',
+            url: `${process.env.NEXT_PUBLIC_SITE_URL}/og/og-image.png`,
             width: 1200,
             height: 630,
             alt: 'iNum Calculator - Your Calculator Lives in Browser'
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
         card: 'summary_large_image',
         title: "Your Calculator Lives in Browser",
         description: "Access powerful calculations from any browser, any device",
-        images: ['/og-image.png'],
+        images: [`${process.env.NEXT_PUBLIC_SITE_URL}/og/og-image.png`],
     },
     verification: {
         google: "iWmaFInJnmbUgp-og6FwJxMepqJkuWHaNIKr5kkjlCo",
