@@ -14,21 +14,42 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-    title: "iNum - Smart Calculator for Everyone",
-    description: "A programmer-friendly calculator that anyone can use. Convert units, write functions, and calculate with ease.",
-    keywords: ["calculator", "unit converter", "developer tools", "programming", "math"],
+    title: "Your Calculator Lives in Browser",
+    description: "Access powerful calculations from any browser, any device",
+    keywords: [
+        "online calculator",
+        "browser calculator",
+        "web calculator",
+        "programming calculator",
+        "unit converter",
+        "developer tools",
+        "math functions"
+    ],
+    icons: {
+        icon: [
+            { rel: 'icon', url: '/icons/icon.svg', type: 'image/svg+xml' }
+        ]
+    },
+    manifest: '/manifest.json',
     openGraph: {
-        title: "iNum - Smart Calculator for Everyone",
-        description: "A programmer-friendly calculator that anyone can use. Convert units, write functions, and calculate with ease.",
+        title: "Your Calculator Lives in Browser",
+        description: "Access powerful calculations from any browser, any device",
         url: process.env.NEXT_PUBLIC_SITE_URL,
         siteName: "iNum",
         locale: "en_US",
         type: "website",
+        images: [{
+            url: '/og-image.png',
+            width: 1200,
+            height: 630,
+            alt: 'iNum Calculator - Your Calculator Lives in Browser'
+        }]
     },
     twitter: {
-        card: "summary_large_image",
-        title: "iNum - Smart Calculator for Everyone",
-        description: "A programmer-friendly calculator that anyone can use. Convert units, write functions, and calculate with ease.",
+        card: 'summary_large_image',
+        title: "Your Calculator Lives in Browser",
+        description: "Access powerful calculations from any browser, any device",
+        images: ['/og-image.png'],
     },
     verification: {
         google: "iWmaFInJnmbUgp-og6FwJxMepqJkuWHaNIKr5kkjlCo",
